@@ -31,15 +31,19 @@ const state = {
   town: "",        // "" = all
   office: "",      // "" = all
   politician: "",  // exact recipient name, "" = none
-  donor: "",       // substring for the donors table only
+  donor: "",       // donor-name substring; a global filter (every panel)
 };
 
-// Rows matching Town + Office + Politician (the "global" filter set).
+// Rows matching every active filter — Town, Office, Politician, and Donor.
+// All four are global: every panel (headline, timeline, donors table, and the
+// candidate/donor card) is recomputed from this set.
 function globalRows() {
+  const dq = state.donor.trim().toLowerCase();
   return ROWS.filter((r) =>
     (!state.town || r.town === state.town) &&
     (!state.office || r.office === state.office) &&
-    (!state.politician || r.recipient === state.politician));
+    (!state.politician || r.recipient === state.politician) &&
+    (!dq || (r.donor || "").toLowerCase().includes(dq)));
 }
 
 // ---------------------------------------------------------------------------
@@ -178,9 +182,8 @@ function donorAggregates(rows) {
 }
 
 function renderDonors(rows) {
+  // `rows` is already donor-filtered by globalRows(); just aggregate and rank.
   let donors = donorAggregates(rows);
-  const q = state.donor.trim().toLowerCase();
-  if (q) donors = donors.filter((d) => (d.name || "").toLowerCase().includes(q));
   donors.sort((a, b) => b.total - a.total);
   donors = donors.slice(0, 50);
 
@@ -321,9 +324,9 @@ function renderCandidate() {
   detail.innerHTML = `<p class="cand-empty">Select a politician — or search a donor above — to follow the money.</p>`;
 }
 
-// Candidate view: the backers behind one politician.
+// Candidate view: the backers behind one politician (within all active filters).
 function renderCandidateCard(detail) {
-  const rows = ROWS.filter((r) => r.recipient === state.politician);
+  const rows = globalRows();   // already scoped to this politician (+ town/office/donor)
   if (!rows.length) {
     detail.innerHTML = `<p class="cand-empty">No contributions found for “${esc(state.politician)}”.</p>`;
     return;
@@ -399,11 +402,7 @@ function renderCandidateCard(detail) {
 // instead). The donor search is a substring, so it may match several donors;
 // when it resolves to exactly one we title the card with that donor's name.
 function renderDonorCard(detail, q) {
-  const ql = q.toLowerCase();
-  const scope = ROWS.filter((r) =>
-    (!state.town || r.town === state.town) &&
-    (!state.office || r.office === state.office) &&
-    (r.donor || "").toLowerCase().includes(ql));
+  const scope = globalRows();  // town/office/donor filtered (no politician in this branch)
   if (!scope.length) {
     detail.innerHTML = `<p class="cand-empty">No donors match “${esc(q)}” in this view.</p>`;
     return;
@@ -505,15 +504,14 @@ function wireControls() {
   townSel.addEventListener("change", () => { state.town = townSel.value; onScopeChange(); });
   officeSel.addEventListener("change", () => { state.office = officeSel.value; onScopeChange(); });
 
-  // Donor search narrows the donors table AND (when no politician is picked)
-  // drives the candidate section to the candidates that donor funds. Debounced.
+  // Donor search is a global filter — every panel reflects it. Debounced so the
+  // timeline chart isn't re-animated on every keystroke.
   let donorTimer = null;
   donorInput.addEventListener("input", () => {
     clearTimeout(donorTimer);
     donorTimer = setTimeout(() => {
       state.donor = donorInput.value;
-      renderDonors(globalRows());
-      renderCandidate();
+      render();
     }, 120);
   });
 
