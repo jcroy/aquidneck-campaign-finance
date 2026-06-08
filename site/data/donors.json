@@ -1,0 +1,53 @@
+[
+  {
+    "donor_key": "CVS PAC|20004",
+    "name": "CVS PAC",
+    "city": "WASHINGTON",
+    "total": 500.0,
+    "gifts": 1,
+    "candidates": [
+      "JANE DOE FOR COUNCIL"
+    ]
+  },
+  {
+    "donor_key": "JOHN SMITH|02840",
+    "name": "JOHN SMITH",
+    "city": "NEWPORT",
+    "total": 450.0,
+    "gifts": 2,
+    "candidates": [
+      "BOB ROE SCHOOL",
+      "JANE DOE FOR COUNCIL"
+    ]
+  },
+  {
+    "donor_key": "MARY JONES|02842",
+    "name": "MARY JONES",
+    "city": "MIDDLETOWN",
+    "total": 100.0,
+    "gifts": 1,
+    "candidates": [
+      "JANE DOE FOR COUNCIL"
+    ]
+  },
+  {
+    "donor_key": "SUE LEE|02842",
+    "name": "SUE LEE",
+    "city": "MIDDLETOWN",
+    "total": 75.0,
+    "gifts": 1,
+    "candidates": [
+      "BOB ROE SCHOOL"
+    ]
+  },
+  {
+    "donor_key": "AB DONOR|",
+    "name": "AB DONOR",
+    "city": null,
+    "total": 40.0,
+    "gifts": 1,
+    "candidates": [
+      "BOB ROE SCHOOL"
+    ]
+  }
+]

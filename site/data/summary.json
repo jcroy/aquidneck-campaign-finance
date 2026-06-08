@@ -1,0 +1,18 @@
+{
+  "total_raised": 1165.0,
+  "num_candidates": 2,
+  "num_donors": 5,
+  "num_contributions": 6,
+  "year_min": 2018,
+  "year_max": 2022,
+  "by_town": [
+    {
+      "town": "Newport",
+      "total": 850.0
+    },
+    {
+      "town": "Middletown",
+      "total": 315.0
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+[
+  {
+    "name": "JANE DOE FOR COUNCIL",
+    "town": "Newport",
+    "office": "City/Town Council",
+    "total_raised": 850.0,
+    "num_contributions": 3,
+    "num_donors": 3,
+    "avg_gift": 283.3333333333333,
+    "timeline": [
+      {
+        "year": 2018,
+        "amount": 100.0
+      },
+      {
+        "year": 2020,
+        "amount": 750.0
+      }
+    ],
+    "top_donors": [
+      {
+        "name": "CVS PAC",
+        "total": 500.0
+      },
+      {
+        "name": "JOHN SMITH",
+        "total": 250.0
+      },
+      {
+        "name": "MARY JONES",
+        "total": 100.0
+      }
+    ]
+  },
+  {
+    "name": "BOB ROE SCHOOL",
+    "town": "Middletown",
+    "office": "School Committee",
+    "total_raised": 315.0,
+    "num_contributions": 3,
+    "num_donors": 3,
+    "avg_gift": 105.0,
+    "timeline": [
+      {
+        "year": 2022,
+        "amount": 315.0
+      }
+    ],
+    "top_donors": [
+      {
+        "name": "JOHN SMITH",
+        "total": 200.0
+      },
+      {
+        "name": "SUE LEE",
+        "total": 75.0
+      },
+      {
+        "name": "AB DONOR",
+        "total": 40.0
+      }
+    ]
+  }
+]
