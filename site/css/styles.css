@@ -456,7 +456,7 @@ main {
   color: var(--ink-40);
   font-variant-numeric: tabular-nums;
 }
-#donors-table tbody tr:nth-child(-n+3) .col-rank { color: var(--accent); }
+.col-rank.is-top { color: var(--accent); }
 
 .donor-name {
   position: relative;
@@ -479,6 +479,23 @@ main {
 .donor-name__text { position: relative; }
 .city { color: var(--ink-80); font-size: .9rem; }
 .num.strong { font-weight: 700; }
+
+/* Per-candidate breakdown rows — shown under a donor when the view is filtered
+   by donor or town/office, so you can see exactly who they funded and how much. */
+.donor-sub td {
+  padding-top: .34rem;
+  padding-bottom: .34rem;
+  font-size: .86rem;
+  background: rgba(11, 31, 51, .025);
+}
+.donor-sub .sub-cand { color: var(--ink-80); padding-left: 1.7rem; }
+.sub-arrow { color: var(--ink-40); margin-right: .5rem; }
+.donor-sub .sub-amt { color: var(--ink-80); font-weight: 600; }
+.donor-sub--more .sub-cand {
+  color: var(--ink-40);
+  font-style: italic;
+  font-size: .8rem;
+}
 
 
 .empty { color: var(--ink-40); font-style: italic; margin: 0; }

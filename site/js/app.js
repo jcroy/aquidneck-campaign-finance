@@ -171,14 +171,50 @@ function donorAggregates(rows) {
   for (const r of rows) {
     let d = map.get(r.donorKey);
     if (!d) {
-      d = { name: r.donor, city: r.city, total: 0, gifts: 0, cands: new Set() };
+      d = { name: r.donor, city: r.city, total: 0, gifts: 0, cands: new Set(), byCand: new Map() };
       map.set(r.donorKey, d);
     }
     d.total += r.amount;
     d.gifts += 1;
     d.cands.add(r.recipient);
+    d.byCand.set(r.recipient, (d.byCand.get(r.recipient) || 0) + r.amount);
   }
   return [...map.values()];
+}
+
+// How many candidate rows to list under a donor before collapsing the rest
+// into a "+N more" summary — keeps a prolific donor from flooding the table.
+const BREAKDOWN_LIMIT = 12;
+
+// Show the per-candidate breakdown when the view is narrowed by donor or
+// town/office — but not when a single politician is picked (then every donor
+// maps one-to-one to that candidate, so there's nothing to break down).
+function showBreakdown() {
+  return !state.politician && (state.donor.trim() || state.town || state.office);
+}
+
+// Indented sub-rows listing each candidate this donor funded, biggest first.
+// Candidate name sits under Donor+City; the amount stays under the Total column.
+function breakdownRows(d, rowIdx) {
+  const cands = [...d.byCand.entries()].sort((a, b) => b[1] - a[1]);
+  const shown = cands.slice(0, BREAKDOWN_LIMIT);
+  let html = shown.map(([name, amt]) => `
+    <tr class="donor-sub" style="--row:${rowIdx}">
+      <td class="col-rank"></td>
+      <td class="sub-cand" colspan="2"><span class="sub-arrow">&#8627;</span>${esc(name)}</td>
+      <td class="num sub-amt">${fmt(amt)}</td>
+      <td></td><td></td>
+    </tr>`).join("");
+  const extra = cands.length - shown.length;
+  if (extra > 0) {
+    html += `
+    <tr class="donor-sub donor-sub--more" style="--row:${rowIdx}">
+      <td class="col-rank"></td>
+      <td class="sub-cand" colspan="2">+${extra} more candidate${extra === 1 ? "" : "s"}</td>
+      <td></td><td></td><td></td>
+    </tr>`;
+  }
+  return html;
 }
 
 function renderDonors(rows) {
@@ -192,12 +228,13 @@ function renderDonors(rows) {
     body.innerHTML = `<tr><td colspan="6" class="empty" style="padding:1.2rem .85rem">No donors match this filter.</td></tr>`;
     return;
   }
+  const breakdown = showBreakdown();
   const max = Math.max(...donors.map((d) => d.total), 1);
   body.innerHTML = donors.map((d, i) => {
     const pct = Math.max((d.total / max) * 100, 2);
-    return `
+    const row = `
     <tr style="--row:${i}">
-      <td class="col-rank">${i + 1}</td>
+      <td class="col-rank${i < 3 ? " is-top" : ""}">${i + 1}</td>
       <td class="donor-name">
         <span class="bar" style="width:${pct}%"></span>
         <span class="donor-name__text">${esc(d.name)}</span>
@@ -207,6 +244,7 @@ function renderDonors(rows) {
       <td class="num">${d.gifts}</td>
       <td class="num">${d.cands.size}</td>
     </tr>`;
+    return breakdown && d.cands.size > 1 ? row + breakdownRows(d, i) : row;
   }).join("");
 }
 
