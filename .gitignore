@@ -8,5 +8,5 @@ data/processed/*.csv
 .pytest_cache/
 discovery.log
 *.log
-dashboard-preview.png
+dashboard-*.png
 .playwright-mcp/

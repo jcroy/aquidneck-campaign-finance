@@ -12,8 +12,10 @@ def main():
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
-        committees = discover_committees(page)
-        browser.close()
+        try:
+            committees = discover_committees(page)
+        finally:
+            browser.close()
     seed = json.loads(SEED.read_text()) if SEED.exists() else []
     by_name = {}
     for s in seed:

@@ -4,7 +4,14 @@ from pathlib import Path
 
 
 def raised_only(df):
-    """Money actually raised: everything except refunds and loans."""
+    """Money actually raised: everything except refunds and loans.
+
+    Exclusion is by contribution *type*. A small number of negative-amount
+    correction rows that the filer did not label as a refund (so they classify
+    as individual/pac/etc.) still net into totals -- this is intentional: they
+    are adjustments to real receipts, not refunds, and their net effect is
+    negligible against the overall total.
+    """
     return df[~df["type"].isin(["refund", "loan"])]
 
 

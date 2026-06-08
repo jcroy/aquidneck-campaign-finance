@@ -174,6 +174,6 @@ function renderCandidates(cands) {
     document.body.classList.add("is-ready");
   } catch (e) {
     document.body.insertAdjacentHTML("afterbegin",
-      `<p style="color:#e2553c;padding:1rem">Error loading data: ${e.message}</p>`);
+      `<p style="color:#e2553c;padding:1rem">Error loading data: ${esc(e.message)}</p>`);
   }
 })();
