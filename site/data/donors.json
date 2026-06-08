@@ -1,53 +1,784 @@
 [
   {
-    "donor_key": "CVS PAC|20004",
-    "name": "CVS PAC",
-    "city": "WASHINGTON",
-    "total": 500.0,
-    "gifts": 1,
+    "donor_key": "PORTSMOUTH DEMOCRATIC TOWN COMMITTEE|02871",
+    "name": "PORTSMOUTH DEMOCRATIC TOWN COMMITTEE",
+    "city": "PORTSMOUTH",
+    "total": 99304.95000000001,
+    "gifts": 252,
     "candidates": [
-      "JANE DOE FOR COUNCIL"
+      "ANDREW V KELLY",
+      "Albert E Honnen JR.",
+      "CATHERINE HOLTMAN",
+      "CHARLES J LEVESQUE",
+      "DANIELA ABBOTT",
+      "DAVID D CROSTON",
+      "DAVID P FIORILLO",
+      "DENNIS M CANARIO",
+      "E. RICHARD CARPENDER",
+      "ELIAS JAMES WHEELER",
+      "EMILY ANN COPELAND",
+      "EMILY EGGINTON SKEEHAN",
+      "FREDERICK W FAERBER III",
+      "ISABELLE ALTMAN KELLY",
+      "JAMES A SEVENEY",
+      "JEFFERY C LEWIS",
+      "JESSICA LINEBERGER",
+      "JOHN J DELEHANTY III",
+      "JOHN M TAYLOR",
+      "JOHN MARK RYAN",
+      "JUAN CARLOS PAYERO",
+      "John G McDaid",
+      "KAREN MARLOW MCDAID",
+      "KEVIN M AGUIAR",
+      "KEVIN P GAVIN",
+      "LEONARD B. KATZMAN",
+      "LINDA L UJIFUSA",
+      "MARJORIE F LEVESQUE",
+      "MARK J. KATZMAN",
+      "MARY DONOHUE MAGEE",
+      "MICHAEL ALLAN BUDDEMEYER",
+      "MR. JOHN F. BLAESS",
+      "MR. JOHN WOJICHOWSKI",
+      "MR. ROBERT W. CHURCH",
+      "Marian J. Loffredo",
+      "NANCY J ZITKA",
+      "RAYMOND D DAVIS",
+      "SONDRA A BLANK",
+      "SYLVIA J WEDGE",
+      "TARAH B WOODS",
+      "TASHA M MACGIBBON",
+      "TERRI-DENISE CORTVRIEND",
+      "TIMOTHY E GRISSETT",
+      "WILLIAM E WEST"
     ]
   },
   {
-    "donor_key": "JOHN SMITH|02840",
-    "name": "JOHN SMITH",
+    "donor_key": "PORTSMOUTH REPUBLICAN TOWN COMMITTEE|02871",
+    "name": "PORTSMOUTH REPUBLICAN TOWN COMMITTEE",
+    "city": "PORTSMOUTH",
+    "total": 44644.82,
+    "gifts": 84,
+    "candidates": [
+      "ALBERT D BUDDEMEYER",
+      "CYNTHIA S PERROTTI",
+      "DANDY ANN MANNING-KARACA",
+      "DAVID G. REISE",
+      "DAVID MICHAEL GLEASON",
+      "Deborah Mitchell Young",
+      "Douglas L. Wilkey",
+      "ELIZABETH A. PEDRO",
+      "ERICA MEDLEY",
+      "H WEBER WILSON",
+      "HUBERT E LITTLE",
+      "JAMIE R B HEANEY",
+      "JONATHAN H. HARRIS",
+      "JOSEPH A. MATAIS",
+      "JUDITH J STAVEN",
+      "Jason M. Dunlea",
+      "Jeffrey C. Plumb",
+      "Joseph W Robicheau",
+      "Keith E. Hamilton",
+      "LAWRENCE J FITZMORRIS",
+      "MICHAEL ALLAN BUDDEMEYER",
+      "MICHAEL J DALY",
+      "Melinda A. Dupont",
+      "NORBERT J RATTAY",
+      "P RENE IMS",
+      "PAUL FRANCIS KESSON",
+      "PETER J MCINTYRE",
+      "Phyllis C. Cloutier",
+      "Ronald R. Dupont",
+      "SHARLENE M PATTON",
+      "Thomas D. Smith",
+      "Thomas R. Vadney"
+    ]
+  },
+  {
+    "donor_key": "SHUFELT JOHN|02840",
+    "name": "SHUFELT, JOHN",
     "city": "NEWPORT",
-    "total": 450.0,
-    "gifts": 2,
+    "total": 19150.0,
+    "gifts": 32,
     "candidates": [
-      "BOB ROE SCHOOL",
-      "JANE DOE FOR COUNCIL"
+      "HENRY FRANCIS WINTHROP",
+      "JAMES F DIAS",
+      "JAMIE BOVA",
+      "JEANNE-MARIE NAPOLITANO",
+      "JOHN FERNANDO FLOREZ",
+      "JOSEPH P PRATT",
+      "KATHRYN E LEONARD",
+      "LYNN U CEGLIE",
+      "MARCO T CAMACHO",
+      "MARVIN L ABNEY",
+      "MICHAEL T FARLEY",
+      "NAOMI L NEVILLE",
+      "STEPHEN R COYNE"
     ]
   },
   {
-    "donor_key": "MARY JONES|02842",
-    "name": "MARY JONES",
+    "donor_key": "KILROY PATRICK|02840",
+    "name": "Kilroy, Patrick",
+    "city": "NEWPORT",
+    "total": 17753.2,
+    "gifts": 18,
+    "candidates": [
+      "CHARLES M HOLDER JR.",
+      "JEANNE-MARIE NAPOLITANO",
+      "LOUIS P DIPALMA",
+      "MARK D ARAMLI",
+      "MARVIN L ABNEY",
+      "RAYMOND E GOMES",
+      "XAYKHAM REXFORD KHAMSYVORAVONG"
+    ]
+  },
+  {
+    "donor_key": "MIDDLETOWN DEMOCRATIC TOWN COMMITTEE|02842",
+    "name": "MIDDLETOWN DEMOCRATIC TOWN COMMITTEE",
     "city": "MIDDLETOWN",
-    "total": 100.0,
-    "gifts": 1,
+    "total": 16336.12,
+    "gifts": 31,
     "candidates": [
-      "JANE DOE FOR COUNCIL"
+      "CHARLES J VAILLANCOURT",
+      "CHRISTOPHER T SEMONELLI",
+      "EILEEN M SPILLANE",
+      "ELLRONY WILLIAMS",
+      "EMILY M TESSIER",
+      "Edward J Silveira JR.",
+      "FRANCIS A FORGUE",
+      "Frank A. Bozyan",
+      "GREGORY M HUET",
+      "JONATHAN M. PERRY",
+      "LAWRENCE FRANK",
+      "LOUIS P DIPALMA",
+      "PAUL M RODRIGUES",
+      "Richard P. Cambra",
+      "TERRI-DENISE CORTVRIEND",
+      "Thomas R. Newman"
     ]
   },
   {
-    "donor_key": "SUE LEE|02842",
-    "name": "SUE LEE",
+    "donor_key": "SARDELLA RICHARD C|02840",
+    "name": "Sardella, Richard C.",
+    "city": "NEWPORT",
+    "total": 15905.0,
+    "gifts": 29,
+    "candidates": [
+      "CHARLES Y DUNCAN",
+      "HENRY FRANCIS WINTHROP",
+      "JEANNE-MARIE NAPOLITANO",
+      "JOHN FERNANDO FLOREZ",
+      "JOHN MORGAN WALKER",
+      "KATHLEEN M SILVIA",
+      "MARCO T CAMACHO",
+      "MARVIN L ABNEY",
+      "RICHARD WICK RUDD",
+      "Thomas R. Newman"
+    ]
+  },
+  {
+    "donor_key": "TURANO DENNIS B|02842",
+    "name": "TURANO, DENNIS B",
     "city": "MIDDLETOWN",
-    "total": 75.0,
-    "gifts": 1,
+    "total": 15102.91,
+    "gifts": 6,
     "candidates": [
-      "BOB ROE SCHOOL"
+      "DENNIS B TURANO"
     ]
   },
   {
-    "donor_key": "AB DONOR|",
-    "name": "AB DONOR",
+    "donor_key": "BOYLE CHRISTOPHER|02840",
+    "name": "Boyle, Christopher",
+    "city": "NEWPORT",
+    "total": 12945.3,
+    "gifts": 49,
+    "candidates": [
+      "DAVID CHARLES HANOS JR.",
+      "KEVIN M MICHAUD",
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY",
+      "MOLLY KAPSTEIN COTE",
+      "RAYMOND E GOMES",
+      "TERRI-DENISE CORTVRIEND",
+      "XAYKHAM REXFORD KHAMSYVORAVONG"
+    ]
+  },
+  {
+    "donor_key": "RI BROTHERHOOD OF CORRECTIONAL OFFICERS PAC|02920",
+    "name": "RI BROTHERHOOD OF CORRECTIONAL OFFICERS PAC",
+    "city": "CRANSTON",
+    "total": 12300.0,
+    "gifts": 36,
+    "candidates": [
+      "AMY G RICE",
+      "CHARLES J LEVESQUE",
+      "DENNIS M CANARIO",
+      "JAMES A SEVENEY",
+      "LINDA L UJIFUSA",
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY",
+      "TERRI-DENISE CORTVRIEND"
+    ]
+  },
+  {
+    "donor_key": "RI STATE ASSOCIATION OF FIREFIGHTERS|02911",
+    "name": "RI STATE ASSOCIATION OF FIREFIGHTERS",
+    "city": "NORTH PROVIDENCE",
+    "total": 11725.0,
+    "gifts": 59,
+    "candidates": [
+      "AMY G RICE",
+      "CHARLES J LEVESQUE",
+      "DAVID CHARLES HANOS JR.",
+      "DENNIS M CANARIO",
+      "JAMES A SEVENEY",
+      "LINDA L UJIFUSA",
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY",
+      "TERRI-DENISE CORTVRIEND"
+    ]
+  },
+  {
+    "donor_key": "NEARI PACE NATIONAL EDUCATION ASSOCIATION OF RI|02920",
+    "name": "NEARI PACE (National Education Association of RI)",
+    "city": "CRANSTON",
+    "total": 11150.0,
+    "gifts": 52,
+    "candidates": [
+      "AMY G RICE",
+      "CHARLES J LEVESQUE",
+      "DENNIS M CANARIO",
+      "JAMES A SEVENEY",
+      "LINDA L UJIFUSA",
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY",
+      "TERRI-DENISE CORTVRIEND"
+    ]
+  },
+  {
+    "donor_key": "PEOPLE RI COUNCIL 94 AFSCME AFLCIO PAC|02904",
+    "name": "PEOPLE, RI COUNCIL 94, AFSCME AFL-CIO PAC",
+    "city": "NORTH PROVIDENCE",
+    "total": 10825.0,
+    "gifts": 32,
+    "candidates": [
+      "AMY G RICE",
+      "CHARLES J LEVESQUE",
+      "DAVID R CARLIN JR.",
+      "DENNIS M CANARIO",
+      "JAMES A SEVENEY",
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY",
+      "TERRI-DENISE CORTVRIEND"
+    ]
+  },
+  {
+    "donor_key": "SHUFELT JEAN|02840",
+    "name": "SHUFELT, JEAN",
+    "city": "NEWPORT",
+    "total": 10500.0,
+    "gifts": 16,
+    "candidates": [
+      "COLLEEN A. MCGRATH",
+      "JAMES F DIAS",
+      "JEANNE-MARIE NAPOLITANO",
+      "JOSEPH P PRATT",
+      "MICHAEL T FARLEY",
+      "STEPHEN C WALUK",
+      "STEPHEN R COYNE"
+    ]
+  },
+  {
+    "donor_key": "COHEN JON|02840",
+    "name": "COHEN, JON",
+    "city": "NEWPORT",
+    "total": 10150.0,
+    "gifts": 24,
+    "candidates": [
+      "AMY G RICE",
+      "JOHN J TRIFERO",
+      "JUSTIN S MCLAUGHLIN",
+      "KATHRYN E LEONARD",
+      "MARVIN L ABNEY",
+      "MARY C CONNOLLY",
+      "RICHARD E O'NEILL",
+      "STEPHEN C WALUK",
+      "STEPHEN R COYNE"
+    ]
+  },
+  {
+    "donor_key": "PLUMBERS PIPEFITTERS LOCAL 51 PAC|02915",
+    "name": "PLUMBERS & PIPEFITTERS LOCAL 51 PAC",
+    "city": "EAST PROVIDENCE",
+    "total": 10125.0,
+    "gifts": 43,
+    "candidates": [
+      "AMY G RICE",
+      "BRUCE J LONG",
+      "CHARLES J LEVESQUE",
+      "DAVID CHARLES HANOS JR.",
+      "DENNIS M CANARIO",
+      "JAMES A SEVENEY",
+      "JOHN MORGAN WALKER",
+      "LINDA L UJIFUSA",
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY",
+      "TERRI-DENISE CORTVRIEND"
+    ]
+  },
+  {
+    "donor_key": "REALTORS PAC OF RI|02888",
+    "name": "REALTORS PAC OF RI",
+    "city": "WARWICK",
+    "total": 9750.0,
+    "gifts": 33,
+    "candidates": [
+      "BRUCE D ALLEN",
+      "CHARLES J LEVESQUE",
+      "HERBERT B ARMSTRONG",
+      "JAMES A DRING",
+      "JAMES A SEVENEY",
+      "KATHRYN E LEONARD",
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY",
+      "SHIRLEY R MELLO"
+    ]
+  },
+  {
+    "donor_key": "RI LABORERS POLITICAL LEAGUE|02903",
+    "name": "RI LABORER'S POLITICAL LEAGUE",
+    "city": "PROVIDENCE",
+    "total": 9600.0,
+    "gifts": 31,
+    "candidates": [
+      "AMY G RICE",
+      "CHARLES J LEVESQUE",
+      "DENNIS M CANARIO",
+      "JAMES A SEVENEY",
+      "LINDA L UJIFUSA",
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY",
+      "TERRI-DENISE CORTVRIEND"
+    ]
+  },
+  {
+    "donor_key": "RI FEDERATION OF TEACHERS COPE PAC|02908",
+    "name": "RI FEDERATION OF TEACHERS COPE PAC",
+    "city": "PROVIDENCE",
+    "total": 9520.0,
+    "gifts": 45,
+    "candidates": [
+      "AMY G RICE",
+      "CHARLES J LEVESQUE",
+      "DENNIS M CANARIO",
+      "JAMES A SEVENEY",
+      "LINDA L UJIFUSA",
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY",
+      "TERRI-DENISE CORTVRIEND"
+    ]
+  },
+  {
+    "donor_key": "|",
+    "name": "",
     "city": null,
-    "total": 40.0,
-    "gifts": 1,
+    "total": 9239.41,
+    "gifts": 63,
     "candidates": [
-      "BOB ROE SCHOOL"
+      "ANGELA LIMA",
+      "Albert E Honnen JR.",
+      "CATHERINE HOLTMAN",
+      "DAVID A QUIROA",
+      "DAVID CHARLES HANOS JR.",
+      "DAVID G. REISE",
+      "DAVID R CARLIN III",
+      "JAMES A SEVENEY",
+      "KATHRYN E LEONARD",
+      "KENDRA WILSON MUENTER",
+      "KEVIN M AGUIAR",
+      "LINDA L UJIFUSA",
+      "MARY ANN EDWARDS",
+      "NAOMI L NEVILLE",
+      "SUSAN DOUGLAS TAYLOR",
+      "TERRI-DENISE CORTVRIEND",
+      "Thomas R. Vadney"
+    ]
+  },
+  {
+    "donor_key": "RI AFLCIO PAC|02908",
+    "name": "RI AFL-CIO PAC",
+    "city": "PROVIDENCE",
+    "total": 9125.0,
+    "gifts": 51,
+    "candidates": [
+      "AMY G RICE",
+      "CHARLES J LEVESQUE",
+      "DAVID CHARLES HANOS JR.",
+      "DENNIS M CANARIO",
+      "JAMES A SEVENEY",
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY",
+      "TERRI-DENISE CORTVRIEND",
+      "XAYKHAM REXFORD KHAMSYVORAVONG"
+    ]
+  },
+  {
+    "donor_key": "RI SENATE LEADERSHIP PAC|02940",
+    "name": "RI SENATE LEADERSHIP PAC",
+    "city": "PROVIDENCE",
+    "total": 8850.0,
+    "gifts": 14,
+    "candidates": [
+      "CHARLES J LEVESQUE",
+      "JAMES A SEVENEY",
+      "LOUIS P DIPALMA"
+    ]
+  },
+  {
+    "donor_key": "IUOE LOCAL 57 INTERNATIONAL UNION OF OPERATING ENGINEERS|02919",
+    "name": "IUOE LOCAL 57 (International Union of Operating Engineers)",
+    "city": "JOHNSTON",
+    "total": 8800.0,
+    "gifts": 19,
+    "candidates": [
+      "JAMES A SEVENEY",
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY"
+    ]
+  },
+  {
+    "donor_key": "PERIK ELIZABETH|02835",
+    "name": "Perik, Elizabeth",
+    "city": "JAMESTOWN",
+    "total": 8754.5,
+    "gifts": 20,
+    "candidates": [
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY",
+      "TERRI-DENISE CORTVRIEND",
+      "XAYKHAM REXFORD KHAMSYVORAVONG"
+    ]
+  },
+  {
+    "donor_key": "NEWPORT DEMOCRATIC CITY COMMITTEE|02840",
+    "name": "NEWPORT DEMOCRATIC CITY COMMITTEE",
+    "city": "NEWPORT",
+    "total": 8750.0,
+    "gifts": 13,
+    "candidates": [
+      "AMY G RICE",
+      "EILEEN M SPILLANE",
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY"
+    ]
+  },
+  {
+    "donor_key": "LOPES JR MATTHEW A|02919",
+    "name": "Lopes JR, Matthew A",
+    "city": "JOHNSTON",
+    "total": 8300.0,
+    "gifts": 17,
+    "candidates": [
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY"
+    ]
+  },
+  {
+    "donor_key": "RHODE ISLAND PARTNERSHIP FOR HOME CARE POLITICAL ACTION COMMITTEE|02886",
+    "name": "RHODE ISLAND PARTNERSHIP FOR HOME CARE POLITICAL ACTION COMMITTEE",
+    "city": "WARWICK",
+    "total": 8200.0,
+    "gifts": 18,
+    "candidates": [
+      "CHARLES J LEVESQUE",
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY",
+      "TERRI-DENISE CORTVRIEND"
+    ]
+  },
+  {
+    "donor_key": "RI SENATE DEMOCRATS PAC|02940",
+    "name": "RI SENATE DEMOCRATS PAC",
+    "city": "PROVIDENCE",
+    "total": 8150.0,
+    "gifts": 13,
+    "candidates": [
+      "CHARLES J LEVESQUE",
+      "JAMES A SEVENEY",
+      "LOUIS P DIPALMA"
+    ]
+  },
+  {
+    "donor_key": "RI HEALTH CARE ASSOCIATION PAC|02886",
+    "name": "RI HEALTH CARE ASSOCIATION PAC",
+    "city": "WARWICK",
+    "total": 8050.0,
+    "gifts": 26,
+    "candidates": [
+      "CHARLES J LEVESQUE",
+      "JAMES A SEVENEY",
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY",
+      "TERRI-DENISE CORTVRIEND"
+    ]
+  },
+  {
+    "donor_key": "SCHORSCH NICHOLAS|02840",
+    "name": "Schorsch, Nicholas",
+    "city": "NEWPORT",
+    "total": 8000.0,
+    "gifts": 8,
+    "candidates": [
+      "CHARLES M HOLDER JR.",
+      "HENRY F LOMBARDI JR.",
+      "LOUIS P DIPALMA",
+      "XAYKHAM REXFORD KHAMSYVORAVONG"
+    ]
+  },
+  {
+    "donor_key": "RI DENTAL PAC|02886",
+    "name": "RI DENTAL PAC",
+    "city": "WARWICK",
+    "total": 7890.0,
+    "gifts": 24,
+    "candidates": [
+      "AMY G RICE",
+      "BRUCE J LONG",
+      "CHARLES J LEVESQUE",
+      "LINDA L UJIFUSA",
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY",
+      "TERRI-DENISE CORTVRIEND",
+      "XAYKHAM REXFORD KHAMSYVORAVONG"
+    ]
+  },
+  {
+    "donor_key": "PAIVAWEED M TERESA|02840",
+    "name": "Paiva-Weed, M. Teresa",
+    "city": "NEWPORT",
+    "total": 7550.0,
+    "gifts": 30,
+    "candidates": [
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY",
+      "SANDRA J FLOWERS"
+    ]
+  },
+  {
+    "donor_key": "SIPPRELLE SUSAN|02842",
+    "name": "Sipprelle, Susan",
+    "city": "MIDDLETOWN",
+    "total": 7500.0,
+    "gifts": 5,
+    "candidates": [
+      "KENDRA WILSON MUENTER",
+      "XAYKHAM REXFORD KHAMSYVORAVONG"
+    ]
+  },
+  {
+    "donor_key": "RUGGERIO DOMINICK J|02904",
+    "name": "Ruggerio, Dominick J.",
+    "city": "NORTH PROVIDENCE",
+    "total": 7400.0,
+    "gifts": 18,
+    "candidates": [
+      "LINDA L UJIFUSA",
+      "LOUIS P DIPALMA"
+    ]
+  },
+  {
+    "donor_key": "MCCAFFREY MICHAEL J|02889",
+    "name": "MCCAFFREY, MICHAEL J",
+    "city": "WARWICK",
+    "total": 7200.0,
+    "gifts": 22,
+    "candidates": [
+      "CHARLES J LEVESQUE",
+      "LOUIS P DIPALMA"
+    ]
+  },
+  {
+    "donor_key": "HAMILTON DORRANCE H|02840",
+    "name": "HAMILTON, DORRANCE H",
+    "city": "NEWPORT",
+    "total": 7000.0,
+    "gifts": 7,
+    "candidates": [
+      "CHARLES Y DUNCAN",
+      "KATHRYN E LEONARD",
+      "MARY C CONNOLLY"
+    ]
+  },
+  {
+    "donor_key": "HUTTLER STEPHEN|02842",
+    "name": "Huttler, Stephen",
+    "city": "MIDDLETOWN",
+    "total": 7000.0,
+    "gifts": 5,
+    "candidates": [
+      "LOUIS P DIPALMA",
+      "XAYKHAM REXFORD KHAMSYVORAVONG"
+    ]
+  },
+  {
+    "donor_key": "PRINCE ELIZABETH|02840",
+    "name": "Prince, Elizabeth",
+    "city": "NEWPORT",
+    "total": 7000.0,
+    "gifts": 4,
+    "candidates": [
+      "XAYKHAM REXFORD KHAMSYVORAVONG"
+    ]
+  },
+  {
+    "donor_key": "SIPPRELLE DWIGHT|02842",
+    "name": "Sipprelle, Dwight",
+    "city": "MIDDLETOWN",
+    "total": 7000.0,
+    "gifts": 5,
+    "candidates": [
+      "XAYKHAM REXFORD KHAMSYVORAVONG"
+    ]
+  },
+  {
+    "donor_key": "SCHORSCH SHELLEY|02840",
+    "name": "Schorsch, Shelley",
+    "city": "NEWPORT",
+    "total": 6500.0,
+    "gifts": 6,
+    "candidates": [
+      "CHARLES M HOLDER JR.",
+      "LOUIS P DIPALMA",
+      "XAYKHAM REXFORD KHAMSYVORAVONG"
+    ]
+  },
+  {
+    "donor_key": "VITALE CHRISTOPHER|02809",
+    "name": "Vitale, Christopher",
+    "city": "BRISTOL",
+    "total": 6375.0,
+    "gifts": 24,
+    "candidates": [
+      "JAMES A SEVENEY",
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY",
+      "TERRI-DENISE CORTVRIEND",
+      "XAYKHAM REXFORD KHAMSYVORAVONG"
+    ]
+  },
+  {
+    "donor_key": "DEPASQUALE MARK P|02852",
+    "name": "DePasquale, Mark P.",
+    "city": "NORTH KINGSTOWN",
+    "total": 6250.0,
+    "gifts": 8,
+    "candidates": [
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY"
+    ]
+  },
+  {
+    "donor_key": "PETRARCA JOHN H|02865",
+    "name": "Petrarca, John H",
+    "city": "LINCOLN",
+    "total": 6250.0,
+    "gifts": 12,
+    "candidates": [
+      "JAMES A SEVENEY",
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY"
+    ]
+  },
+  {
+    "donor_key": "AMICA RI PAC|02865",
+    "name": "AMICA / RI PAC",
+    "city": "LINCOLN",
+    "total": 6050.0,
+    "gifts": 31,
+    "candidates": [
+      "DAVID R CARLIN III",
+      "DENNIS M CANARIO",
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY"
+    ]
+  },
+  {
+    "donor_key": "HESTER LAWRENCE|27730",
+    "name": "Hester, Lawrence",
+    "city": "SANFORD",
+    "total": 6000.0,
+    "gifts": 4,
+    "candidates": [
+      "XAYKHAM REXFORD KHAMSYVORAVONG"
+    ]
+  },
+  {
+    "donor_key": "LARAMEE SUZANNA|02840",
+    "name": "Laramee, Suzanna",
+    "city": "NEWPORT",
+    "total": 6000.0,
+    "gifts": 3,
+    "candidates": [
+      "XAYKHAM REXFORD KHAMSYVORAVONG"
+    ]
+  },
+  {
+    "donor_key": "BROOKS JR JOHN W|02840",
+    "name": "Brooks Jr, John W",
+    "city": "NEWPORT",
+    "total": 5950.0,
+    "gifts": 12,
+    "candidates": [
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY"
+    ]
+  },
+  {
+    "donor_key": "LOPES LEONARD|02835",
+    "name": "Lopes, Leonard",
+    "city": "JAMESTOWN",
+    "total": 5875.0,
+    "gifts": 23,
+    "candidates": [
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY",
+      "XAYKHAM REXFORD KHAMSYVORAVONG"
+    ]
+  },
+  {
+    "donor_key": "PANNONE LOPES DEVEREAUX OGARA LLC RI STATE PAC|02919",
+    "name": "PANNONE LOPES DEVEREAUX & O'GARA LLC RI STATE PAC",
+    "city": "JOHNSTON",
+    "total": 5750.0,
+    "gifts": 29,
+    "candidates": [
+      "AMY G RICE",
+      "DENNIS M CANARIO",
+      "JAMES A SEVENEY",
+      "LINDA L UJIFUSA",
+      "LOUIS P DIPALMA",
+      "MARVIN L ABNEY",
+      "TERRI-DENISE CORTVRIEND"
+    ]
+  },
+  {
+    "donor_key": "HUTTLER VIRGINIA|02842",
+    "name": "Huttler, Virginia",
+    "city": "MIDDLETOWN",
+    "total": 5725.0,
+    "gifts": 3,
+    "candidates": [
+      "XAYKHAM REXFORD KHAMSYVORAVONG"
+    ]
+  },
+  {
+    "donor_key": "FUND FOR DEMOCRATIC LEADERSHIP|02921",
+    "name": "FUND FOR DEMOCRATIC LEADERSHIP",
+    "city": "CRANSTON",
+    "total": 5600.0,
+    "gifts": 7,
+    "candidates": [
+      "DENNIS M CANARIO",
+      "MARVIN L ABNEY"
     ]
   }
 ]

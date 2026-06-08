@@ -72,3 +72,25 @@ def test_year_derived_from_receipt_date():
     n = _normalized()
     row = n[n["contribution_id"] == "3"].iloc[0]
     assert row["year"] == 2018
+
+
+def test_org_id_from_filename_overrides_unmatchable_name(tmp_path):
+    # A committee CSV named <org_id>.csv whose filing OrganizationName does NOT
+    # match any committee by name must still map to the right committee via the
+    # filename OrgID, with the recipient name canonicalized to the committee's
+    # discovered name. (Real exports drift in punctuation/wording.)
+    header = (
+        "ContributionID,ContDesc,IncompleteDesc,OrganizationName,ViewIncomplete,"
+        "ReceiptDate,DepositDate,Amount,ContribExplanation,MPFMatchAmount,FirstName,"
+        "LastName,FullName,Address,CityStZip,EmployerName,EmpAddress,EmpCityStZip,"
+        "ReceiptDesc,BeginDate,EndDate,TransType"
+    )
+    row = (
+        '9001,Individual,,FRIENDS OF JANE DOE,Complete,11/03/2020,,300.00,,0.00,'
+        'Pat,Roe,PAT ROE,1 St,"NEWPORT, RI 02840",,,,Check,,,Contribution'
+    )
+    (tmp_path / "100.csv").write_text(header + "\n" + row + "\n")  # org_id 100 = JANE DOE / Newport
+    committees = json.loads((FIX / "committees.json").read_text())
+    n = normalize_contributions(load_raw_csvs(tmp_path, pattern="100.csv"), committees)
+    assert set(n["town"]) == {"Newport"}
+    assert set(n["recipient_name"]) == {"JANE DOE FOR COUNCIL"}

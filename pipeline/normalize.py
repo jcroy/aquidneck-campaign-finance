@@ -59,10 +59,21 @@ from pipeline.entities import donor_key
 
 
 def load_raw_csvs(raw_dir, pattern="*.csv") -> pd.DataFrame:
-    """Concatenate every raw export CSV in raw_dir (all columns as strings)."""
+    """Concatenate every raw export CSV in raw_dir (all columns as strings).
+
+    Each CSV is named ``<org_id>.csv`` (we fetch one file per committee), so we
+    tag every row with the source committee's OrgID from the filename. That is
+    the reliable join key to committee metadata -- far better than matching the
+    filing's free-text OrganizationName, which drifts in whitespace/punctuation.
+    Non-numeric filenames (e.g. test fixtures) get an empty tag and fall back to
+    name matching downstream.
+    """
     frames = []
     for path in sorted(glob.glob(os.path.join(str(raw_dir), pattern))):
-        frames.append(pd.read_csv(path, dtype=str, keep_default_na=False))
+        frame = pd.read_csv(path, dtype=str, keep_default_na=False)
+        stem = os.path.splitext(os.path.basename(path))[0]
+        frame["_src_org_id"] = stem if stem.isdigit() else ""
+        frames.append(frame)
     return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
 
 
@@ -71,22 +82,35 @@ def _norm_name(name) -> str:
 
 
 def normalize_contributions(df, committees) -> pd.DataFrame:
-    """Clean, dedupe, and enrich raw rows into the canonical contributions table."""
+    """Clean, dedupe, and enrich raw rows into the canonical contributions table.
+
+    Each row is matched to its committee by source OrgID (from the CSV filename)
+    when available, falling back to a normalized OrganizationName match. The
+    recipient name is canonicalized to the committee's discovered name so filing
+    variants (double spaces, punctuation) collapse to a single candidate.
+    """
     if df.empty:
         return df
     df = df.drop_duplicates(subset=["ContributionID"]).copy()
+    by_org_id = {str(c["org_id"]): c for c in committees if c.get("org_id")}
     by_name = {_norm_name(c["name"]): c for c in committees}
+
+    src_org_id = df["_src_org_id"] if "_src_org_id" in df.columns else [""] * len(df)
+    org_names = df["OrganizationName"].str.strip()
+    committee_for = [
+        by_org_id.get(str(oid)) or by_name.get(_norm_name(name)) or {}
+        for oid, name in zip(src_org_id, org_names)
+    ]
 
     csz = df["CityStZip"].apply(parse_city_state_zip)
     out = pd.DataFrame({
         "contribution_id": df["ContributionID"].astype(str),
-        "recipient_name": df["OrganizationName"].str.strip(),
         "donor_name": df["FullName"].str.strip(),
         "employer": df["EmployerName"].str.strip(),
         "amount": pd.to_numeric(df["Amount"], errors="coerce").fillna(0.0),
         "receipt_date": df["ReceiptDate"].apply(clean_date),
     })
-    committee_for = [by_name.get(_norm_name(n), {}) for n in out["recipient_name"]]
+    out["recipient_name"] = [c.get("name", n) for c, n in zip(committee_for, org_names)]
     out["office"] = [c.get("office", "Unknown") for c in committee_for]
     out["town"] = [c.get("town", "Unknown") for c in committee_for]
     out["donor_city"] = [t[0] for t in csz]
