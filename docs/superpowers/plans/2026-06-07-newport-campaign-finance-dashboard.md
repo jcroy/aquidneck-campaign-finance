@@ -1,12 +1,12 @@
-# Newport Campaign Finance Dashboard Implementation Plan
+# Aquidneck Island Campaign Finance Dashboard Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Scrape all historical campaign contributions to Newport, RI municipal candidates from the RI Board of Elections, transform them into clean aggregates, and present them in a static, screenshot-friendly dashboard published to GitHub Pages.
+**Goal:** Scrape all historical campaign contributions to municipal candidates in Newport, Middletown, and Portsmouth from the RI Board of Elections, transform them into clean donor-focused aggregates, and present them in a static, screenshot-friendly dashboard published to GitHub Pages.
 
-**Architecture:** Five isolated stages — Acquire (Playwright scraper) → Normalize → Resolve → Aggregate (pandas pipeline emitting small JSON) → Present (static HTML/JS reading the JSON). The pipeline is fully TDD'd against a sample-CSV fixture; the scraper is tested at its pure helper boundary and verified with live runs. All ERTS-specific quirks are walled off in one module so the ~2026 system replacement is a contained change.
+**Architecture:** Five isolated stages — Acquire (Playwright scraper, 3 towns) → Normalize → Resolve → Aggregate (pandas pipeline emitting small JSON) → Present (static HTML/JS reading the JSON). The pipeline is fully TDD'd against a sample-CSV fixture; the scraper is tested at its pure helper boundary and verified with live runs. All ERTS-specific quirks are walled off in one module. Focus is recipients (candidate + town) and their donors — no donor-origin geo classification.
 
-**Tech Stack:** Python 3.11+, Playwright (Chromium), pandas, pyarrow, pytest; vanilla JS + Chart.js (CDN) for the dashboard; GitHub Actions for Pages deploy.
+**Tech Stack:** Python 3.11+, Playwright (Chromium), pandas, pyarrow, pytest; vanilla JS + Chart.js (vendored locally) for the dashboard; GitHub Actions for Pages deploy.
 
 **Spec:** `docs/superpowers/specs/2026-06-07-newport-campaign-finance-dashboard-design.md`
 
@@ -20,15 +20,15 @@ scraper/
   fetchers/
     __init__.py
     erts.py              # ERTS quirks: URL builders, org-id parse, Playwright discovery+export
-  discover_committees.py # CLI: Org Search -> data/committees.json
+  discover_committees.py # CLI: Org Search over 3 towns -> data/committees.json
   fetch_contributions.py # CLI: per-OrgID CSV export -> data/raw/<org_id>.csv (resumable)
-  seed_candidates.json   # hand-maintained extra Newport committee names (may be empty)
+  seed_candidates.json   # hand-maintained extra committee names (may be empty)
 pipeline/
   __init__.py
-  normalize.py           # field cleaners + load/normalize raw CSVs
-  entities.py            # donor_key + geography classification
+  normalize.py           # field cleaners + load/normalize raw CSVs (adds town/office)
+  entities.py            # donor_key
   aggregate.py           # build_* view builders + write_views
-  build.py               # CLI: normalize -> resolve -> aggregate -> site/data/*.json
+  build.py               # CLI: normalize -> aggregate -> site/data/*.json
 data/
   committees.json
   raw/                   # downloaded CSVs (gitignored)
@@ -37,6 +37,7 @@ site/
   index.html
   css/styles.css
   js/app.js
+  js/vendor/chart.umd.min.js
   data/                  # generated view JSON (committed for Pages)
 tests/
   fixtures/sample_raw.csv
@@ -138,7 +139,7 @@ The only unit-testable seams of the scraper: extracting an OrgID from a result l
 
 `tests/test_erts.py`:
 ```python
-from scraper.fetchers.erts import org_id_from_href, build_report_url
+from scraper.fetchers.erts import org_id_from_href, build_report_url, TOWNS, OFFICES
 
 
 def test_org_id_from_relative_href():
@@ -160,6 +161,11 @@ def test_build_report_url_includes_org_and_contrib():
     assert "OrgID=5004" in url
     assert "ReportType=Contrib" in url
     assert "BeginDate=&EndDate=" in url  # all-history range
+
+
+def test_towns_and_offices_constants():
+    assert TOWNS == ["Newport", "Middletown", "Portsmouth"]
+    assert "School Committee" in OFFICES
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -176,6 +182,7 @@ from urllib.parse import urlparse, parse_qs
 
 ERTS_BASE = "https://www.ricampaignfinance.com/RIPublic"
 CONTRIBUTIONS_URL = f"{ERTS_BASE}/Contributions.aspx"
+TOWNS = ["Newport", "Middletown", "Portsmouth"]
 OFFICES = ["Mayor/Administrator", "City/Town Council", "School Committee"]
 
 
@@ -208,20 +215,20 @@ def build_report_url(org_id: str) -> str:
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `pytest tests/test_erts.py -v`
-Expected: 4 passed
+Expected: 5 passed
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add scraper/fetchers/erts.py tests/test_erts.py
-git commit -m "feat(scraper): ERTS url/org-id helpers"
+git commit -m "feat(scraper): ERTS url/org-id helpers and town/office constants"
 ```
 
 ---
 
-### Task 3: Committee discovery (Playwright)
+### Task 3: Committee discovery across 3 towns (Playwright)
 
-Drive the ERTS Org Search to enumerate Newport committees and their OrgIDs.
+Drive the ERTS Org Search to enumerate committees and OrgIDs for each town.
 
 **Files:**
 - Modify: `scraper/fetchers/erts.py` (add `discover_committees`)
@@ -234,54 +241,56 @@ Append:
 import time
 
 
-def discover_committees(page, city: str = "Newport", offices=None) -> list[dict]:
-    """Enumerate committees for a city across the given offices.
+def discover_committees(page, towns=None, offices=None) -> list[dict]:
+    """Enumerate committees for each town across the given offices.
 
-    Returns list of {org_id, name, office, status}. Uses Playwright `page`.
-    The Org Search dropdowns are selected by visible label so we never hardcode
-    ASP.NET option values.
+    Returns list of {org_id, name, office, town, status}. Uses Playwright `page`.
+    Dropdowns are selected by visible label so we never hardcode ASP.NET option values.
     """
+    towns = towns or TOWNS
     offices = offices or OFFICES
     found: dict[str, dict] = {}
-    for office in offices:
-        page.goto(CONTRIBUTIONS_URL, wait_until="networkidle")
-        # Open the Organization Search dialog.
-        page.get_by_role("button", name="New Organization Search").click()
-        page.wait_for_load_state("networkidle")
-        page.get_by_label("City").fill(city)
-        page.get_by_label("Office").select_option(label=office)
-        page.get_by_role("button", name="Search").click()
-        page.wait_for_load_state("networkidle")
-
-        while True:
-            rows = page.locator("table#dgResults tr, table[id*=Results] tr")
-            count = rows.count()
-            for i in range(count):
-                link = rows.nth(i).locator("a[href*='OrgID']")
-                if link.count() == 0:
-                    continue
-                href = link.first.get_attribute("href") or ""
-                org_id = org_id_from_href(href)
-                if not org_id:
-                    continue
-                name = (link.first.inner_text() or "").strip()
-                status = "inactive" if "inactive" in rows.nth(i).inner_text().lower() else "active"
-                found[org_id] = {"org_id": org_id, "name": name, "office": office, "status": status}
-            nxt = page.get_by_role("link", name="Next")
-            if nxt.count() == 0 or not nxt.first.is_enabled():
-                break
-            nxt.first.click()
+    for town in towns:
+        for office in offices:
+            page.goto(CONTRIBUTIONS_URL, wait_until="networkidle")
+            page.get_by_role("button", name="New Organization Search").click()
             page.wait_for_load_state("networkidle")
-            time.sleep(1.0)  # polite throttle
+            page.get_by_label("City").fill(town)
+            page.get_by_label("Office").select_option(label=office)
+            page.get_by_role("button", name="Search").click()
+            page.wait_for_load_state("networkidle")
+
+            while True:
+                rows = page.locator("table#dgResults tr, table[id*=Results] tr")
+                for i in range(rows.count()):
+                    link = rows.nth(i).locator("a[href*='OrgID']")
+                    if link.count() == 0:
+                        continue
+                    href = link.first.get_attribute("href") or ""
+                    org_id = org_id_from_href(href)
+                    if not org_id or org_id in found:
+                        continue
+                    name = (link.first.inner_text() or "").strip()
+                    status = "inactive" if "inactive" in rows.nth(i).inner_text().lower() else "active"
+                    found[org_id] = {
+                        "org_id": org_id, "name": name,
+                        "office": office, "town": town, "status": status,
+                    }
+                nxt = page.get_by_role("link", name="Next")
+                if nxt.count() == 0 or not nxt.first.is_enabled():
+                    break
+                nxt.first.click()
+                page.wait_for_load_state("networkidle")
+                time.sleep(1.0)  # polite throttle
     return list(found.values())
 ```
 
-> NOTE FOR IMPLEMENTER: ERTS is legacy ASP.NET; exact element ids/labels may differ from the guesses above. During the live run (Step 4) use the Playwright MCP / `browser_snapshot` to read the real selectors and adjust the locators in this function until discovery returns rows. This is expected — only this function changes, nothing downstream.
+> NOTE FOR IMPLEMENTER: ERTS is legacy ASP.NET; exact element ids/labels may differ from the guesses above. During the live run (Step 4) use the Playwright MCP `browser_snapshot` to read the real selectors and adjust the locators in this function until discovery returns rows. Only this function changes; nothing downstream does.
 
 - [ ] **Step 2: Create the CLI `scraper/discover_committees.py`**
 
 ```python
-"""CLI: discover Newport committees -> data/committees.json"""
+"""CLI: discover Newport/Middletown/Portsmouth committees -> data/committees.json"""
 import json
 from pathlib import Path
 from playwright.sync_api import sync_playwright
@@ -298,15 +307,20 @@ def main():
         committees = discover_committees(page)
         browser.close()
 
-    # Merge hand-maintained seed names (no org_id yet -> resolved on next run or manually).
+    # Merge hand-maintained seed names (keyed by name; discovered entries win).
     seed = json.loads(SEED.read_text()) if SEED.exists() else []
-    by_name = {c["name"].upper(): c for c in committees}
+    by_name = {}
     for s in seed:
-        by_name.setdefault(s["name"].upper(), {**s, "status": s.get("status", "active")})
+        by_name[s["name"].upper()] = {"status": "active", **s}
+    for c in committees:
+        by_name[c["name"].upper()] = c
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(list(by_name.values()), indent=2))
-    print(f"Wrote {len(by_name)} committees to {OUT}")
+    by_town = {}
+    for c in by_name.values():
+        by_town[c.get("town", "?")] = by_town.get(c.get("town", "?"), 0) + 1
+    print(f"Wrote {len(by_name)} committees to {OUT}: {by_town}")
 
 
 if __name__ == "__main__":
@@ -316,18 +330,18 @@ if __name__ == "__main__":
 - [ ] **Step 3: Run the discovery CLI against the live site**
 
 Run: `. .venv/bin/activate && python -m scraper.discover_committees`
-Expected: prints "Wrote N committees" with N > 0; `data/committees.json` exists and contains objects with non-empty `org_id`, `name`, and an `office` in {Mayor/Administrator, City/Town Council, School Committee}.
+Expected: prints "Wrote N committees ... {'Newport': .., 'Middletown': .., 'Portsmouth': ..}" with N > 0 across all three towns; `data/committees.json` contains objects with non-empty `org_id`, `name`, `office`, and `town`.
 
 - [ ] **Step 4: Verify the output looks sane**
 
-Run: `python -c "import json; d=json.load(open('data/committees.json')); print(len(d)); print(d[0])"`
-Expected: a count (recon saw 52 School Committee committees alone, so expect dozens total) and a well-formed first record. If rows are empty, fix the locators in `discover_committees` per the NOTE and re-run.
+Run: `python -c "import json; d=json.load(open('data/committees.json')); print(len(d)); print({c['town'] for c in d}); print(d[0])"`
+Expected: a count (dozens), the set `{'Newport','Middletown','Portsmouth'}`, and a well-formed first record. If rows are empty, fix the locators per the NOTE and re-run.
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add scraper/fetchers/erts.py scraper/discover_committees.py data/committees.json
-git commit -m "feat(scraper): discover Newport committees via Org Search"
+git commit -m "feat(scraper): discover committees across Newport/Middletown/Portsmouth"
 ```
 
 ---
@@ -354,19 +368,16 @@ def fetch_contribution_csv(page, org_id: str, dest_path) -> int:
     dest = Path(dest_path)
     page.goto(build_report_url(org_id), wait_until="networkidle")
     with page.expect_download() as dl_info:
-        # The export link id observed in recon is 'lnkExport'; fall back to text.
         export = page.locator("#lnkExport")
         if export.count() == 0:
             export = page.get_by_text("Export Detail to comma delimited file")
         export.first.click()
-        # Some ERTS flows route through DownloadFile.aspx with a second link.
         try:
             page.get_by_role("link", name="View/Save").click(timeout=5000)
         except Exception:
             pass
     download = dl_info.value
     download.save_as(str(dest))
-    # Count rows (minus header).
     with open(dest, encoding="utf-8", errors="replace") as fh:
         return max(0, sum(1 for _ in fh) - 1)
 ```
@@ -403,7 +414,7 @@ def main():
                 continue
             try:
                 n = fetch_contribution_csv(page, org_id, dest)
-                print(f"ok   {org_id} ({c['name']}) - {n} rows")
+                print(f"ok   {org_id} ({c['name']}, {c.get('town')}) - {n} rows")
             except Exception as e:
                 print(f"FAIL {org_id} ({c['name']}) - {e}")
             time.sleep(1.5)  # polite throttle
@@ -558,7 +569,7 @@ git commit -m "feat(pipeline): field cleaners for city/zip, dates, types"
 
 ---
 
-### Task 6: Entity resolution helpers (TDD)
+### Task 6: Donor grouping key (TDD)
 
 **Files:**
 - Create: `pipeline/entities.py`
@@ -568,26 +579,16 @@ git commit -m "feat(pipeline): field cleaners for city/zip, dates, types"
 
 `tests/test_entities.py`:
 ```python
-from pipeline.entities import donor_key, classify_geography
+from pipeline.entities import donor_key
 
 
-def test_donor_key_normalizes():
+def test_donor_key_normalizes_name_and_zip():
     assert donor_key("John Q. Public", "02840") == "JOHN Q PUBLIC|02840"
     assert donor_key("  acme   pac ", None) == "ACME PAC|"
 
 
-def test_geography_in_town_by_city_or_zip():
-    assert classify_geography("NEWPORT", "RI", "02840") == "in_town"
-    assert classify_geography("", "RI", "02841") == "in_town"
-
-
-def test_geography_middletown_trap_is_rest_of_ri():
-    assert classify_geography("MIDDLETOWN", "RI", "02842") == "rest_of_ri"
-
-
-def test_geography_out_of_state_and_unknown():
-    assert classify_geography("WASHINGTON", "DC", "20004") == "out_of_state"
-    assert classify_geography("", "", "") == "unknown"
+def test_donor_key_same_person_same_zip_matches():
+    assert donor_key("JOHN SMITH", "02840") == donor_key("john smith", "02840")
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -599,10 +600,8 @@ Expected: FAIL with `ModuleNotFoundError: No module named 'pipeline.entities'`
 
 `pipeline/entities.py`:
 ```python
-"""Stage 3: donor grouping key + geography classification."""
+"""Stage 3: approximate donor grouping key (name + zip)."""
 import re
-
-NEWPORT_ZIPS = {"02840", "02841"}
 
 
 def donor_key(full_name, zip_code=None):
@@ -611,22 +610,6 @@ def donor_key(full_name, zip_code=None):
     name = re.sub(r"\s+", " ", name).strip()
     z = str(zip_code).strip() if zip_code else ""
     return f"{name}|{z}"
-
-
-def classify_geography(city, state, zip_code):
-    """One of in_town / rest_of_ri / out_of_state / unknown."""
-    c = (city or "").strip().upper()
-    s = (state or "").strip().upper()
-    z = (zip_code or "").strip()
-    if not c and not s and not z:
-        return "unknown"
-    if c == "NEWPORT" or z in NEWPORT_ZIPS:
-        return "in_town"
-    if s == "RI":
-        return "rest_of_ri"
-    if s:
-        return "out_of_state"
-    return "unknown"
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -638,14 +621,14 @@ Expected: all passed
 
 ```bash
 git add pipeline/entities.py tests/test_entities.py
-git commit -m "feat(pipeline): donor key + geography classification"
+git commit -m "feat(pipeline): approximate donor grouping key"
 ```
 
 ---
 
 ### Task 7: Normalize assembly (TDD with fixture)
 
-Load raw CSVs into one canonical, deduped, enriched table.
+Load raw CSVs into one canonical, deduped, enriched table tagged with candidate town/office.
 
 **Files:**
 - Create: `tests/fixtures/sample_raw.csv`
@@ -662,7 +645,7 @@ ContributionID,ContDesc,IncompleteDesc,OrganizationName,ViewIncomplete,ReceiptDa
 3,Individual,,JANE DOE FOR COUNCIL,Complete,09/15/2018,09/16/2018,100.00,,0.00,Mary,Jones,MARY JONES,2 Oak St,"MIDDLETOWN, RI 02842",,,,Check,,,Contribution
 4,Refund,,JANE DOE FOR COUNCIL,Complete,11/10/2020,,-50.00,,0.00,John,Smith,JOHN SMITH,1 Main St,"NEWPORT, RI 02840",,,,Check,,,Refund
 1,Individual,,JANE DOE FOR COUNCIL,Complete,11/03/2020,11/05/2020,250.00,,0.00,John,Smith,JOHN SMITH,1 Main St,"NEWPORT, RI 02840",Acme,,,Check,,,Contribution
-5,Individual,,BOB ROE SCHOOL,Complete,06/01/2022,1/1/1900,75.00,,0.00,Sue,Lee,SUE LEE,3 Elm,"NEWPORT, RI 02841",,,,Check,,,Contribution
+5,Individual,,BOB ROE SCHOOL,Complete,06/01/2022,1/1/1900,75.00,,0.00,Sue,Lee,SUE LEE,3 Elm,"MIDDLETOWN, RI 02842",,,,Check,,,Contribution
 6,Individual,,BOB ROE SCHOOL,Complete,06/02/2022,,40.00,,0.00,A,B,AB DONOR,x,garbagecity,,,,Check,,,Contribution
 7,Individual,,BOB ROE SCHOOL,Complete,05/01/2022,,200.00,,0.00,John,Smith,JOHN SMITH,1 Main St,"NEWPORT, RI 02840",Acme,,,Check,,,Contribution
 ```
@@ -671,8 +654,8 @@ ContributionID,ContDesc,IncompleteDesc,OrganizationName,ViewIncomplete,ReceiptDa
 
 ```json
 [
-  {"org_id": "100", "name": "JANE DOE FOR COUNCIL", "office": "City/Town Council", "status": "active"},
-  {"org_id": "200", "name": "BOB ROE SCHOOL", "office": "School Committee", "status": "inactive"}
+  {"org_id": "100", "name": "JANE DOE FOR COUNCIL", "office": "City/Town Council", "town": "Newport", "status": "active"},
+  {"org_id": "200", "name": "BOB ROE SCHOOL", "office": "School Committee", "town": "Middletown", "status": "inactive"}
 ]
 ```
 
@@ -698,16 +681,18 @@ def test_dedupe_on_contribution_id():
     assert len(n) == 7  # 8 rows, one duplicate ID=1 removed
 
 
-def test_recipient_office_join():
+def test_recipient_town_and_office_join():
     n = _normalized()
     council = n[n["recipient_name"] == "JANE DOE FOR COUNCIL"]
     assert set(council["office"]) == {"City/Town Council"}
+    assert set(council["town"]) == {"Newport"}
+    school = n[n["recipient_name"] == "BOB ROE SCHOOL"]
+    assert set(school["town"]) == {"Middletown"}
 
 
-def test_geography_and_amount_columns():
+def test_amount_and_city_columns():
     n = _normalized()
     row = n[n["contribution_id"] == "2"].iloc[0]
-    assert row["geography"] == "out_of_state"
     assert row["amount"] == 500.0
     assert row["donor_city"] == "WASHINGTON"
 
@@ -730,7 +715,7 @@ Append to `pipeline/normalize.py`:
 import glob
 import os
 import pandas as pd
-from pipeline.entities import donor_key, classify_geography
+from pipeline.entities import donor_key
 
 
 def load_raw_csvs(raw_dir, pattern="*.csv") -> pd.DataFrame:
@@ -761,19 +746,14 @@ def normalize_contributions(df, committees) -> pd.DataFrame:
         "amount": pd.to_numeric(df["Amount"], errors="coerce").fillna(0.0),
         "receipt_date": df["ReceiptDate"].apply(clean_date),
     })
-    out["office"] = [
-        (by_name.get(_norm_name(n)) or {}).get("office", "Unknown")
-        for n in out["recipient_name"]
-    ]
+    committee_for = [by_name.get(_norm_name(n), {}) for n in out["recipient_name"]]
+    out["office"] = [c.get("office", "Unknown") for c in committee_for]
+    out["town"] = [c.get("town", "Unknown") for c in committee_for]
     out["donor_city"] = [t[0] for t in csz]
     out["donor_state"] = [t[1] for t in csz]
     out["donor_zip"] = [t[2] for t in csz]
     out["year"] = out["receipt_date"].apply(lambda d: int(d[:4]) if d else None)
     out["type"] = [classify_type(cd, tt) for cd, tt in zip(df["ContDesc"], df["TransType"])]
-    out["geography"] = [
-        classify_geography(c, s, z)
-        for c, s, z in zip(out["donor_city"], out["donor_state"], out["donor_zip"])
-    ]
     out["donor_key"] = [donor_key(n, z) for n, z in zip(out["donor_name"], out["donor_zip"])]
     return out
 ```
@@ -787,7 +767,7 @@ Expected: all passed
 
 ```bash
 git add pipeline/normalize.py tests/test_normalize.py tests/fixtures/sample_raw.csv tests/fixtures/committees.json
-git commit -m "feat(pipeline): assemble canonical contributions table"
+git commit -m "feat(pipeline): assemble canonical table with candidate town/office"
 ```
 
 ---
@@ -818,16 +798,15 @@ def _norm():
     return normalize_contributions(df, committees)
 
 
-def test_summary_excludes_refunds():
+def test_summary_excludes_refunds_and_breaks_down_by_town():
     s = build_summary(_norm())
     assert s["total_raised"] == 1165.0          # refund (-50) excluded
     assert s["num_candidates"] == 2
     assert s["num_donors"] == 5
+    assert s["num_contributions"] == 6
     assert s["year_min"] == 2018 and s["year_max"] == 2022
-    assert s["in_town"] == 525.0
-    assert s["rest_of_ri"] == 100.0
-    assert s["out_of_state"] == 500.0
-    assert s["unknown"] == 40.0
+    by_town = {t["town"]: t["total"] for t in s["by_town"]}
+    assert by_town == {"Newport": 850.0, "Middletown": 315.0}
 
 
 def test_timeline_by_year():
@@ -844,16 +823,17 @@ def test_top_donor_aggregates_across_candidates():
     assert set(js["candidates"]) == {"JANE DOE FOR COUNCIL", "BOB ROE SCHOOL"}
 
 
-def test_candidates_sorted_with_breakdowns():
+def test_candidates_sorted_with_town():
     cands = build_candidates(_norm())
     assert cands[0]["name"] == "JANE DOE FOR COUNCIL"   # 850 > 315
     assert cands[0]["total_raised"] == 850.0
+    assert cands[0]["town"] == "Newport"
     assert cands[0]["office"] == "City/Town Council"
 
 
 def test_write_views_emits_all_files(tmp_path):
     write_views(_norm(), tmp_path)
-    for fname in ["summary.json", "timeline.json", "donors.json", "candidates.json", "geo.json"]:
+    for fname in ["summary.json", "timeline.json", "donors.json", "candidates.json"]:
         assert (tmp_path / fname).exists()
     summary = json.loads((tmp_path / "summary.json").read_text())
     assert summary["total_raised"] == 1165.0
@@ -877,14 +857,10 @@ def raised_only(df):
     return df[~df["type"].isin(["refund", "loan"])]
 
 
-def _geo_totals(df):
-    g = df.groupby("geography")["amount"].sum()
-    return {k: float(g.get(k, 0.0)) for k in ["in_town", "rest_of_ri", "out_of_state", "unknown"]}
-
-
 def build_summary(df) -> dict:
     r = raised_only(df)
     years = r["year"].dropna()
+    by_town = (r.groupby("town")["amount"].sum().sort_values(ascending=False))
     return {
         "total_raised": float(r["amount"].sum()),
         "num_candidates": int(r["recipient_name"].nunique()),
@@ -892,7 +868,7 @@ def build_summary(df) -> dict:
         "num_contributions": int(len(r)),
         "year_min": int(years.min()) if not years.empty else None,
         "year_max": int(years.max()) if not years.empty else None,
-        **_geo_totals(r),
+        "by_town": [{"town": t, "total": float(a)} for t, a in by_town.items()],
     }
 
 
@@ -928,26 +904,18 @@ def build_candidates(df) -> list[dict]:
                   .sort_values("total", ascending=False).head(10))
         out.append({
             "name": name,
+            "town": grp["town"].iloc[0],
             "office": grp["office"].iloc[0],
             "total_raised": float(grp["amount"].sum()),
             "num_contributions": int(len(grp)),
             "num_donors": int(grp["donor_key"].nunique()),
             "avg_gift": float(grp["amount"].mean()),
-            **_geo_totals(grp),
             "timeline": [{"year": int(y), "amount": float(a)} for y, a in years.items()],
             "top_donors": [{"name": row["name"], "total": float(row["total"])}
                            for _, row in top.iterrows()],
         })
     out.sort(key=lambda x: x["total_raised"], reverse=True)
     return out
-
-
-def build_geo(df) -> dict:
-    r = raised_only(df)
-    by_office = []
-    for office, grp in r.groupby("office"):
-        by_office.append({"office": office, **_geo_totals(grp)})
-    return {"overall": _geo_totals(r), "by_office": by_office}
 
 
 def write_views(df, out_dir):
@@ -957,7 +925,6 @@ def write_views(df, out_dir):
     (out / "timeline.json").write_text(json.dumps(build_timeline(df), indent=2))
     (out / "donors.json").write_text(json.dumps(build_donors(df), indent=2))
     (out / "candidates.json").write_text(json.dumps(build_candidates(df), indent=2))
-    (out / "geo.json").write_text(json.dumps(build_geo(df), indent=2))
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -969,7 +936,7 @@ Expected: all passed
 
 ```bash
 git add pipeline/aggregate.py tests/test_aggregate.py
-git commit -m "feat(pipeline): view aggregations and JSON writer"
+git commit -m "feat(pipeline): donor-focused view aggregations with per-town totals"
 ```
 
 ---
@@ -1052,7 +1019,7 @@ Expected: passed
 - [ ] **Step 5: Run the full pipeline on real scraped data**
 
 Run: `. .venv/bin/activate && python -m pipeline.build`
-Expected: prints "Pipeline complete: N contributions -> site/data"; `site/data/{summary,timeline,donors,candidates,geo}.json` populated with real numbers.
+Expected: prints "Pipeline complete: N contributions -> site/data"; `site/data/{summary,timeline,donors,candidates}.json` populated with real numbers.
 
 - [ ] **Step 6: Run the whole test suite**
 
@@ -1073,16 +1040,18 @@ git commit -m "feat(pipeline): orchestrator + generated view data"
 Static page reading the view JSON. Use the `frontend-design` skill for visual polish.
 
 **Files:**
-- Create: `site/index.html`, `site/css/styles.css`, `site/js/app.js`
+- Create: `site/index.html`, `site/css/styles.css`, `site/js/app.js`, `site/js/vendor/chart.umd.min.js`
 
 - [ ] **Step 1: Invoke the frontend-design skill**
 
-Before writing markup, invoke `frontend-design` to establish a distinctive, credible visual treatment (typography, color, the hero). Apply it to the structure below — do not ship generic defaults.
+Before writing markup, invoke `frontend-design` to establish a distinctive, credible visual
+treatment (typography, color, the hero). Apply it to the structure below — do not ship generic
+defaults.
 
 - [ ] **Step 2: Vendor Chart.js locally, then create `site/index.html`**
 
-Download Chart.js into the repo instead of loading it from a CDN — no Subresource
-Integrity needed, works offline, and removes CDN-compromise risk for the published site:
+Download Chart.js into the repo instead of loading it from a CDN — no Subresource Integrity
+needed, works offline, removes CDN-compromise risk for the published site:
 ```bash
 mkdir -p site/js/vendor
 curl -L https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js \
@@ -1096,16 +1065,16 @@ Then create `site/index.html`:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Newport, RI — Who Funds City Hall</title>
+  <title>Aquidneck Island — Who Funds Local Office</title>
   <link rel="stylesheet" href="css/styles.css">
   <script src="js/vendor/chart.umd.min.js"></script>
 </head>
 <body>
   <header class="hero">
-    <h1>Newport, RI — Who Funds City Hall</h1>
-    <p class="subtitle" id="date-range"></p>
+    <h1>Aquidneck Island — Who Funds Local Office</h1>
+    <p class="subtitle">Newport · Middletown · Portsmouth <span id="date-range"></span></p>
     <div class="stat-row" id="headline-stats"></div>
-    <div class="geo-bar" id="geo-bar"></div>
+    <div class="town-chips" id="town-chips"></div>
   </header>
 
   <main>
@@ -1115,15 +1084,21 @@ Then create `site/index.html`:
     </section>
 
     <section class="panel">
-      <h2>Top Donors</h2>
+      <h2>Top Donors to Local Politicians</h2>
       <table id="donors-table"><thead><tr>
-        <th>Donor</th><th>City</th><th>Total</th><th>Gifts</th><th>Candidates</th>
+        <th>Donor</th><th>City</th><th>Total</th><th>Gifts</th><th>Candidates funded</th>
       </tr></thead><tbody></tbody></table>
     </section>
 
     <section class="panel">
       <h2>By Candidate</h2>
-      <select id="candidate-select"></select>
+      <div class="filters">
+        <label>Town <select id="town-filter">
+          <option>All</option><option>Newport</option>
+          <option>Middletown</option><option>Portsmouth</option>
+        </select></label>
+        <label>Candidate <select id="candidate-select"></select></label>
+      </div>
       <div id="candidate-detail"></div>
     </section>
   </main>
@@ -1150,17 +1125,13 @@ async function load(name) {
 }
 
 function renderHeadline(s) {
-  document.getElementById("date-range").textContent = `${s.year_min}–${s.year_max}`;
+  document.getElementById("date-range").textContent = `· ${s.year_min}–${s.year_max}`;
   document.getElementById("headline-stats").innerHTML = `
     <div class="stat"><span class="num">${fmt(s.total_raised)}</span><span>raised</span></div>
     <div class="stat"><span class="num">${s.num_candidates}</span><span>candidates</span></div>
     <div class="stat"><span class="num">${s.num_donors.toLocaleString()}</span><span>donors</span></div>`;
-  const total = s.in_town + s.rest_of_ri + s.out_of_state + s.unknown || 1;
-  const seg = (v, cls, label) =>
-    `<span class="seg ${cls}" style="width:${(v / total) * 100}%" title="${label}: ${fmt(v)}"></span>`;
-  document.getElementById("geo-bar").innerHTML =
-    seg(s.in_town, "in", "In-town") + seg(s.rest_of_ri, "ri", "Rest of RI") +
-    seg(s.out_of_state, "out", "Out of state") + seg(s.unknown, "unk", "Unknown");
+  document.getElementById("town-chips").innerHTML = s.by_town
+    .map((t) => `<span class="chip">${t.town}: ${fmt(t.total)}</span>`).join("");
 }
 
 function renderTimeline(timeline) {
@@ -1175,27 +1146,37 @@ function renderTimeline(timeline) {
 }
 
 function renderDonors(donors) {
-  const tbody = document.querySelector("#donors-table tbody");
-  tbody.innerHTML = donors.map((d) => `
+  document.querySelector("#donors-table tbody").innerHTML = donors.map((d) => `
     <tr><td>${d.name}</td><td>${d.city || ""}</td><td>${fmt(d.total)}</td>
         <td>${d.gifts}</td><td>${d.candidates.length}</td></tr>`).join("");
 }
 
 function renderCandidates(cands) {
+  const townSel = document.getElementById("town-filter");
   const sel = document.getElementById("candidate-select");
-  sel.innerHTML = cands.map((c, i) => `<option value="${i}">${c.name} — ${c.office}</option>`).join("");
   const detail = document.getElementById("candidate-detail");
-  const show = (i) => {
+
+  function show(i) {
     const c = cands[i];
     detail.innerHTML = `
+      <p><strong>${c.name}</strong> — ${c.town}, ${c.office}</p>
       <p><strong>${fmt(c.total_raised)}</strong> from ${c.num_donors} donors
          (${c.num_contributions} gifts, avg ${fmt(c.avg_gift)})</p>
-      <p>In-town ${fmt(c.in_town)} · Rest of RI ${fmt(c.rest_of_ri)} ·
-         Out of state ${fmt(c.out_of_state)}</p>
       <ol>${c.top_donors.map((d) => `<li>${d.name} — ${fmt(d.total)}</li>`).join("")}</ol>`;
-  };
-  sel.addEventListener("change", (e) => show(e.target.value));
-  if (cands.length) show(0);
+  }
+  function populate(town) {
+    const items = cands
+      .map((c, i) => ({ c, i }))
+      .filter((x) => town === "All" || x.c.town === town);
+    sel.innerHTML = items
+      .map((x) => `<option value="${x.i}">${x.c.name} — ${x.c.town} ${x.c.office}</option>`)
+      .join("");
+    if (items.length) show(items[0].i);
+    else detail.innerHTML = "<p>No candidates for this town.</p>";
+  }
+  townSel.addEventListener("change", (e) => populate(e.target.value));
+  sel.addEventListener("change", (e) => show(Number(e.target.value)));
+  populate("All");
 }
 
 (async function main() {
@@ -1218,20 +1199,19 @@ function renderCandidates(cands) {
 
 Apply the frontend-design output here. Minimum required structural styles:
 ```css
-:root { --in:#1b6; --ri:#fb3; --out:#36c; --unk:#bbb; }
 * { box-sizing: border-box; }
 body { margin:0; font-family: system-ui, sans-serif; color:#1a1a1a; }
 .hero { padding: 2rem; background:#0b1f33; color:#fff; }
 .hero h1 { margin:0 0 .25rem; font-size: clamp(1.5rem, 4vw, 2.5rem); }
-.subtitle { opacity:.8; margin:0 0 1rem; }
+.subtitle { opacity:.85; margin:0 0 1rem; }
 .stat-row { display:flex; gap:2rem; flex-wrap:wrap; }
 .stat { display:flex; flex-direction:column; }
 .stat .num { font-size: clamp(1.5rem, 5vw, 3rem); font-weight:700; }
-.geo-bar { display:flex; height:14px; border-radius:7px; overflow:hidden; margin-top:1rem; }
-.geo-bar .in{background:var(--in)} .ri{background:var(--ri)}
-.geo-bar .out{background:var(--out)} .unk{background:var(--unk)}
+.town-chips { display:flex; gap:.75rem; flex-wrap:wrap; margin-top:1rem; }
+.chip { background:rgba(255,255,255,.12); padding:.3rem .7rem; border-radius:999px; font-size:.9rem; }
 main { max-width: 960px; margin: 0 auto; padding: 1rem; }
 .panel { margin: 2rem 0; }
+.filters { display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:1rem; }
 table { width:100%; border-collapse: collapse; }
 th, td { text-align:left; padding:.4rem .6rem; border-bottom:1px solid #eee; }
 footer { padding: 2rem; color:#666; font-size:.85rem; max-width:960px; margin:0 auto; }
@@ -1241,13 +1221,16 @@ footer { padding: 2rem; color:#666; font-size:.85rem; max-width:960px; margin:0 
 
 Run: `. .venv/bin/activate && (cd site && python -m http.server 8765 &) && sleep 2`
 Then use the Playwright MCP (`browser_navigate` to `http://localhost:8765`, `browser_console_messages`, `browser_take_screenshot`).
-Expected: hero shows the real total/candidate/donor numbers, the timeline bar chart renders, the donors table has rows, the candidate dropdown switches detail. **No console errors.** Stop the server afterward (`kill %1` or `pkill -f http.server`).
+Expected: hero shows the real total/candidate/donor numbers and per-town chips; the timeline bar
+chart renders; the donors table has rows; the town filter narrows the candidate dropdown and the
+candidate detail updates. **No console errors.** Stop the server afterward (`kill %1` or
+`pkill -f http.server`).
 
 - [ ] **Step 6: Commit**
 
 ```bash
 git add site/index.html site/js/app.js site/css/styles.css site/js/vendor/chart.umd.min.js
-git commit -m "feat(site): static dashboard reading view JSON"
+git commit -m "feat(site): donor-focused dashboard with town filter"
 ```
 
 ---
@@ -1293,16 +1276,17 @@ jobs:
 - [ ] **Step 2: Create `README.md`**
 
 ````markdown
-# Newport, RI Campaign Finance Dashboard
+# Aquidneck Island Campaign Finance Dashboard
 
-An easy-to-read dashboard of campaign donations to Newport municipal candidates
-(Mayor, City Council, School Committee), sourced from the RI Board of Elections.
+An easy-to-read dashboard tracking who donates to municipal candidates in **Newport,
+Middletown, and Portsmouth, RI** (Mayor/Administrator, Council, School Committee),
+sourced from the RI Board of Elections.
 
 ## How it works
-1. **Scrape** — `scraper/` discovers Newport committees and downloads each one's
-   contribution CSV from ricampaignfinance.com.
-2. **Build** — `pipeline/` cleans, dedupes, classifies, and aggregates the data
-   into small JSON files in `site/data/`.
+1. **Scrape** — `scraper/` discovers committees in all three towns and downloads each
+   one's contribution CSV from ricampaignfinance.com.
+2. **Build** — `pipeline/` cleans, dedupes, classifies, and aggregates the data into
+   small donor-focused JSON files in `site/data/`.
 3. **Present** — `site/` is a static dashboard that reads those JSON files. It is
    deployed to GitHub Pages by `.github/workflows/pages.yml`.
 
@@ -1312,7 +1296,7 @@ python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
 python -m playwright install chromium
 
-python -m scraper.discover_committees   # -> data/committees.json
+python -m scraper.discover_committees   # -> data/committees.json (3 towns)
 python -m scraper.fetch_contributions   # -> data/raw/<org_id>.csv (resumable)
 python -m pipeline.build                # -> site/data/*.json
 
@@ -1329,8 +1313,8 @@ pytest
 - Donor grouping is name + ZIP — approximate; may merge or split distinct people.
 - The RI source system is being replaced (~2026); scraper URLs/format will change.
   All ERTS-specific code is isolated in `scraper/fetchers/erts.py`.
-- Committees registered with a non-Newport mailing address rely on
-  `scraper/seed_candidates.json` to be included.
+- A candidate's **town** is the town whose search surfaced their committee (registered
+  mailing city); committees registered out-of-town rely on `scraper/seed_candidates.json`.
 - Employer/occupation fields are self-reported and inconsistent.
 
 Data is public record under RI APRA. Not affiliated with any candidate or campaign.
@@ -1346,13 +1330,19 @@ git commit -m "docs: README and GitHub Pages deploy workflow"
 - [ ] **Step 4: Final verification**
 
 Run: `pytest -v`
-Expected: entire suite green. Confirm `git status` is clean and `site/data/*.json` are committed (these are what Pages serves).
+Expected: entire suite green. Confirm `git status` is clean and `site/data/*.json` are committed
+(these are what Pages serves).
 
 ---
 
 ## Notes for the implementer
 
-- **Live-site fragility:** Tasks 3 and 4 target a legacy ASP.NET site whose exact selectors recon could not fully capture. Treat the Playwright locators as starting points; use the Playwright MCP `browser_snapshot` against the live pages to read real ids/labels and adjust **only** inside `scraper/fetchers/erts.py`. Everything downstream is fixed and fully tested.
-- **Order matters:** the pipeline (Tasks 5–9) is independent of the live site and can be built and fully tested first using the fixture; the scraper (Tasks 3–4) can be done in parallel or after.
-- **Data commit policy:** raw CSVs and the parquet are gitignored; the generated `site/data/*.json` IS committed because GitHub Pages serves it.
+- **Live-site fragility:** Tasks 3 and 4 target a legacy ASP.NET site whose exact selectors recon
+  could not fully capture. Treat the Playwright locators as starting points; use the Playwright
+  MCP `browser_snapshot` against the live pages to read real ids/labels and adjust **only** inside
+  `scraper/fetchers/erts.py`. Everything downstream is fixed and fully tested.
+- **Order matters:** the pipeline (Tasks 5–9) is independent of the live site and can be built and
+  fully tested first using the fixture; the scraper (Tasks 3–4) can be done in parallel or after.
+- **Data commit policy:** raw CSVs and the parquet are gitignored; the generated `site/data/*.json`
+  IS committed because GitHub Pages serves it.
 ```
