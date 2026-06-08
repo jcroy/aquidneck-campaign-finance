@@ -480,185 +480,9 @@ main {
 .city { color: var(--ink-80); font-size: .9rem; }
 .num.strong { font-weight: 700; }
 
-/* =========================================================================
-   CANDIDATE SECTION
-   ========================================================================= */
-/* ---- Candidate card ---------------------------------------------------- */
-.cand-card {
-  border: 1px solid var(--line);
-  border-radius: var(--r);
-  background:
-    linear-gradient(180deg, #fff, var(--paper-2));
-  padding: clamp(1.2rem, 3vw, 1.9rem);
-  animation: cardIn .45s ease both;
-}
-.cand-card__head {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem 1.5rem;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding-bottom: 1.1rem;
-  border-bottom: 1px solid var(--line);
-}
-.cand-card__name {
-  margin: 0;
-  font-family: var(--serif);
-  font-weight: 600;
-  font-size: clamp(1.25rem, 3.2vw, 1.7rem);
-  line-height: 1.04;
-  letter-spacing: -.01em;
-}
-.cand-card__meta {
-  margin: .35rem 0 0;
-  font-size: .82rem;
-  font-weight: 600;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  color: var(--brass);
-}
-.cand-card__total { text-align: right; line-height: 1; }
-.cand-card__total .num {
-  font-family: var(--serif);
-  font-weight: 600;
-  font-size: clamp(1.7rem, 5vw, 2.6rem);
-  color: var(--accent);
-  letter-spacing: -.02em;
-}
-.cand-card__total-label {
-  display: block;
-  margin-top: .25rem;
-  font-size: .68rem;
-  font-weight: 700;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: var(--ink-40);
-}
-
-.cand-card__stats {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.6rem 2.4rem;
-  margin: 1.2rem 0 1.6rem;
-  padding: 0;
-}
-.cand-card__stats li { display: flex; flex-direction: column; }
-.cand-card__stats .num {
-  font-family: var(--serif);
-  font-weight: 600;
-  font-size: 1.5rem;
-  line-height: 1;
-}
-.cand-card__stats span:last-child {
-  margin-top: .3rem;
-  font-size: .68rem;
-  font-weight: 700;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: var(--ink-40);
-}
-
-.cand-card__lead {
-  margin: 0 0 .9rem;
-  font-size: .68rem;
-  font-weight: 700;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: var(--ink-40);
-}
-
-.cd-donors { list-style: none; margin: 0; padding: 0; display: grid; gap: .55rem; }
-.cd-donor {
-  display: grid;
-  grid-template-columns: 1.4rem minmax(7rem, 13rem) 1fr auto;
-  align-items: center;
-  gap: .8rem;
-}
-.cd-donor__rank {
-  font-family: var(--serif);
-  font-weight: 600;
-  color: var(--ink-40);
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-}
-.cd-donor:first-child .cd-donor__rank { color: var(--accent); }
-.cd-donor__name {
-  font-weight: 600;
-  font-size: .95rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.cd-donor__track {
-  height: 9px;
-  border-radius: 999px;
-  background: var(--ink-20);
-  overflow: hidden;
-}
-.cd-donor__fill {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--accent-deep), var(--accent));
-  transform-origin: left;
-  animation: barGrow .65s cubic-bezier(.22,1,.36,1) both;
-  scale: 0 1;
-}
-.cd-donor__amt { font-weight: 700; font-size: .95rem; }
 
 .empty { color: var(--ink-40); font-style: italic; margin: 0; }
 
-/* ---- Candidate empty / prompt state ------------------------------------ */
-.cand-empty {
-  margin: 0;
-  padding: clamp(1.6rem, 5vw, 2.6rem);
-  border: 1px dashed var(--ink-20);
-  border-radius: var(--r);
-  background: linear-gradient(180deg, #fff, var(--paper-2));
-  color: var(--ink-40);
-  font-style: italic;
-  font-size: 1.02rem;
-  text-align: center;
-}
-
-/* ---- Per-year trend (mini bars) ---------------------------------------- */
-.cd-trend {
-  list-style: none;
-  margin: .6rem 0 0;
-  padding: 0;
-  display: flex;
-  align-items: flex-end;
-  gap: .35rem;
-  height: 86px;
-}
-.cd-trend__bar {
-  flex: 1 1 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  height: 100%;
-}
-.cd-trend__fill {
-  width: 100%;
-  max-width: 26px;
-  border-radius: 4px 4px 0 0;
-  background: linear-gradient(180deg, var(--accent), rgba(226, 85, 60, .55));
-  transform-origin: bottom;
-  animation: barRise .6s cubic-bezier(.22, 1, .36, 1) both;
-}
-.cd-trend__yr {
-  margin-top: .3rem;
-  font-size: .6rem;
-  font-weight: 700;
-  letter-spacing: .04em;
-  color: var(--ink-40);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-@keyframes barRise { from { transform: scaleY(0); } to { transform: scaleY(1); } }
 
 /* =========================================================================
    FOOTER
@@ -703,7 +527,7 @@ footer p {
     animation-delay: 0ms !important;
     transition-duration: .001ms !important;
   }
-  .donor-name .bar, .cd-donor__fill { scale: 1 1; }
+  .donor-name .bar { scale: 1 1; }
 }
 
 /* =========================================================================
@@ -715,8 +539,6 @@ footer p {
     grid-template-areas: "kicker title" "note note";
   }
   .panel__note { margin-top: .7rem; }
-  .cd-donor { grid-template-columns: 1.2rem 1fr auto; }
-  .cd-donor__track { display: none; }
 
   .ff { flex: 1 1 100%; }
   .ff select { min-width: 0; }
