@@ -76,6 +76,27 @@ def build_candidates(df) -> list[dict]:
     return out
 
 
+def build_contributions(df) -> dict:
+    """Compact columnar dump of every raised contribution for client-side filtering.
+
+    Columnar (fields + rows) rather than array-of-objects so the JSON keys aren't
+    repeated ~12k times -- keeps the payload small enough to ship to a static page,
+    where the dashboard recomputes every view live as the user changes filters.
+    """
+    r = raised_only(df)
+    fields = ["recipient", "town", "office", "donor", "donor_key", "city", "amount", "year", "type"]
+    rows = []
+    for rec in r.itertuples(index=False):
+        y = rec.year
+        rows.append([
+            rec.recipient_name, rec.town, rec.office, rec.donor_name, rec.donor_key,
+            rec.donor_city or "", round(float(rec.amount), 2),
+            (int(y) if y is not None and y == y else None),
+            rec.type,
+        ])
+    return {"fields": fields, "rows": rows}
+
+
 def write_views(df, out_dir):
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -83,3 +104,4 @@ def write_views(df, out_dir):
     (out / "timeline.json").write_text(json.dumps(build_timeline(df), indent=2))
     (out / "donors.json").write_text(json.dumps(build_donors(df), indent=2))
     (out / "candidates.json").write_text(json.dumps(build_candidates(df), indent=2))
+    (out / "contributions.json").write_text(json.dumps(build_contributions(df)))

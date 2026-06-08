@@ -2,7 +2,8 @@ import json
 from pathlib import Path
 from pipeline.normalize import load_raw_csvs, normalize_contributions
 from pipeline.aggregate import (
-    build_summary, build_timeline, build_donors, build_candidates, write_views,
+    build_summary, build_timeline, build_donors, build_candidates,
+    build_contributions, write_views,
 )
 
 FIX = Path(__file__).parent / "fixtures"
@@ -47,9 +48,23 @@ def test_candidates_sorted_with_town():
     assert cands[0]["office"] == "City/Town Council"
 
 
+def test_contributions_columnar_dump():
+    c = build_contributions(_norm())
+    assert c["fields"] == ["recipient", "town", "office", "donor", "donor_key",
+                           "city", "amount", "year", "type"]
+    assert len(c["rows"]) == 6                       # raised rows (refund excluded)
+    amt_i = c["fields"].index("amount")
+    assert sum(r[amt_i] for r in c["rows"]) == 1165.0
+    # every row carries the fields the client needs to filter/aggregate
+    town_i, office_i = c["fields"].index("town"), c["fields"].index("office")
+    assert {r[town_i] for r in c["rows"]} == {"Newport", "Middletown"}
+    assert {r[office_i] for r in c["rows"]} == {"City/Town Council", "School Committee"}
+
+
 def test_write_views_emits_all_files(tmp_path):
     write_views(_norm(), tmp_path)
-    for fname in ["summary.json", "timeline.json", "donors.json", "candidates.json"]:
+    for fname in ["summary.json", "timeline.json", "donors.json",
+                  "candidates.json", "contributions.json"]:
         assert (tmp_path / fname).exists()
     summary = json.loads((tmp_path / "summary.json").read_text())
     assert summary["total_raised"] == 1165.0
