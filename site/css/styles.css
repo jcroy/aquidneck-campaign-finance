@@ -502,6 +502,50 @@ main {
 
 
 /* =========================================================================
+   WHERE THE MONEY COMES FROM — donor-location pie + legend
+   ========================================================================= */
+.geo-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: clamp(1.2rem, 4vw, 2.6rem);
+}
+.geo-chart {
+  position: relative;
+  height: clamp(220px, 30vw, 280px);
+  flex: 0 0 clamp(220px, 32vw, 280px);
+  max-width: 100%;
+}
+.geo-legend {
+  flex: 1 1 280px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.geo-leg {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: .65rem;
+  padding: .44rem 0;
+  border-bottom: 1px solid var(--line);
+  font-size: .92rem;
+}
+.geo-leg:last-child { border-bottom: 0; }
+.geo-sw { width: .8rem; height: .8rem; border-radius: 3px; }
+.geo-city {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.geo-amt { color: var(--ink-80); }
+.geo-pct { color: var(--ink-40); min-width: 3.4rem; text-align: right; }
+.geo-empty { color: var(--ink-40); font-style: italic; list-style: none; }
+
+
+/* =========================================================================
    FOOTER
    ========================================================================= */
 footer {

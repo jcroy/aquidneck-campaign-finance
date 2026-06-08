@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..700&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=5">
+  <link rel="stylesheet" href="css/styles.css?v=6">
   <script src="js/vendor/chart.umd.min.js"></script>
 </head>
 <body>
@@ -74,9 +74,21 @@
       </div>
     </section>
 
-    <section class="panel" id="panel-donors">
+    <section class="panel" id="panel-geo">
       <div class="panel__head">
         <span class="panel__kicker">02</span>
+        <h2>Where the Money Comes From</h2>
+        <p class="panel__note">Share of contributions by donor city. Top cities shown individually; the rest grouped as “Other.”</p>
+      </div>
+      <div class="geo-wrap">
+        <div class="geo-chart"><canvas id="geo-chart"></canvas></div>
+        <ul class="geo-legend" id="geo-legend"></ul>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-donors">
+      <div class="panel__head">
+        <span class="panel__kicker">03</span>
         <h2>Top Donors to Local Politicians</h2>
         <p class="panel__note">Ranked by total given. Donors are grouped by name and ZIP.</p>
       </div>
@@ -101,6 +113,6 @@
        (name + ZIP). Data ~2002–present. Built for transparency, not affiliated with any campaign.</p>
   </footer>
 
-  <script src="js/app.js?v=5"></script>
+  <script src="js/app.js?v=6"></script>
 </body>
 </html>

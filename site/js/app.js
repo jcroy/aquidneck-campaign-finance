@@ -12,6 +12,7 @@ const INK = css.getPropertyValue("--ink").trim() || "#0b1f33";
 const ACCENT = css.getPropertyValue("--accent").trim() || "#e2553c";
 const BRASS = css.getPropertyValue("--brass").trim() || "#b6892f";
 const MUTE = css.getPropertyValue("--ink-40").trim() || "rgba(11,31,51,.4)";
+const PAPER2 = css.getPropertyValue("--paper-2").trim() || "#fbf8f1";
 const FONT = "Archivo, system-ui, sans-serif";
 
 async function load(name) {
@@ -251,6 +252,104 @@ function renderDonors(rows) {
 }
 
 // ---------------------------------------------------------------------------
+// WHERE THE MONEY COMES FROM — donor-city share of dollars. Top cities each
+// get a slice; the long tail collapses into "Other". Honors every filter.
+// ---------------------------------------------------------------------------
+let pieChart = null;
+const GEO_TOP = 8;
+// Palette only advances for real cities; Unknown/Other stay muted grey so they
+// never look like a "place".
+const GEO_PALETTE = ["#e2553c", "#2f5d6e", "#b6892f", "#c43d27",
+                     "#5a7a8c", "#d99a3c", "#7a8a5f", "#8a5a72"];
+const GEO_GREY = { unknown: "#b8b0a4", other: "#9a958b" };
+
+const titleCase = (s) =>
+  s.toLowerCase().replace(/\b[a-z]/g, (c) => c.toUpperCase());
+
+function locationData(rows) {
+  const byCity = new Map();
+  for (const r of rows) {
+    const c = (r.city || "").trim().toUpperCase() || "UNKNOWN";
+    byCity.set(c, (byCity.get(c) || 0) + r.amount);
+  }
+  const entries = [...byCity.entries()].sort((a, b) => b[1] - a[1]);
+  const segs = entries.slice(0, GEO_TOP).map(([city, amt]) => ({
+    label: city === "UNKNOWN" ? "Unknown" : titleCase(city),
+    kind: city === "UNKNOWN" ? "unknown" : "city",
+    amount: amt,
+  }));
+  const rest = entries.slice(GEO_TOP);
+  if (rest.length) {
+    segs.push({
+      label: `Other (${rest.length} ${rest.length === 1 ? "city" : "cities"})`,
+      kind: "other",
+      amount: rest.reduce((s, [, a]) => s + a, 0),
+    });
+  }
+  return segs;
+}
+
+function renderLocations(rows) {
+  const segs = locationData(rows);
+  const total = segs.reduce((s, x) => s + x.amount, 0);
+  const legend = document.getElementById("geo-legend");
+
+  if (!segs.length || total <= 0) {
+    if (pieChart) { pieChart.destroy(); pieChart = null; }
+    legend.innerHTML = `<li class="geo-empty">No contributions match this filter.</li>`;
+    return;
+  }
+
+  // Colors: palette index advances only on real cities, so dropping Unknown/Other
+  // in or out of the top-N never shifts the city hues.
+  let ci = 0;
+  const colors = segs.map((s) =>
+    s.kind === "city" ? GEO_PALETTE[ci++ % GEO_PALETTE.length] : GEO_GREY[s.kind]);
+  const labels = segs.map((s) => s.label);
+  const data = segs.map((s) => s.amount);
+
+  if (pieChart) {
+    pieChart.data.labels = labels;
+    pieChart.data.datasets[0].data = data;
+    pieChart.data.datasets[0].backgroundColor = colors;
+    pieChart.update();
+  } else {
+    pieChart = new Chart(document.getElementById("geo-chart"), {
+      type: "pie",
+      data: { labels, datasets: [{ data, backgroundColor: colors, borderColor: PAPER2, borderWidth: 2, hoverOffset: 6 }] },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 350 },
+        plugins: {
+          legend: { display: false },          // custom HTML legend below
+          tooltip: {
+            backgroundColor: INK,
+            titleFont: { family: FONT, weight: "700" },
+            bodyFont: { family: FONT },
+            padding: 10,
+            cornerRadius: 6,
+            displayColors: false,
+            callbacks: {
+              label: (c) => `${fmt(c.parsed)} · ${total ? ((c.parsed / total) * 100).toFixed(1) : 0}%`,
+            },
+          },
+        },
+      },
+    });
+  }
+
+  // Always-visible legend (swatch · city · $ · %) — screenshot-friendly.
+  legend.innerHTML = segs.map((s, i) => `
+    <li class="geo-leg">
+      <span class="geo-sw" style="background:${colors[i]}"></span>
+      <span class="geo-city">${esc(s.label)}</span>
+      <span class="geo-amt num">${fmt(s.amount)}</span>
+      <span class="geo-pct num">${((s.amount / total) * 100).toFixed(1)}%</span>
+    </li>`).join("");
+}
+
+// ---------------------------------------------------------------------------
 // POLITICIAN COMBOBOX — a real searchable dropdown (cascades under Town+Office).
 // A native <datalist> won't reliably show its options on click, so we render our
 // own list: it opens on focus/click AND filters as you type.
@@ -358,6 +457,7 @@ function render() {
   const rows = globalRows();
   renderHeadline(rows);
   renderTimeline(rows);
+  renderLocations(rows);
   renderDonors(rows);
 }
 
