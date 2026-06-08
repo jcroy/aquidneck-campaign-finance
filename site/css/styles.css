@@ -290,6 +290,41 @@ body {
   box-shadow: 0 0 0 3px rgba(226, 85, 60, .35);
 }
 
+/* Searchable politician dropdown (replaces the unreliable native <datalist>). */
+.combo { position: relative; }
+.combo__list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  margin: 0;
+  padding: .25rem;
+  list-style: none;
+  max-height: 300px;
+  overflow-y: auto;
+  background: #fbf8f1;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  box-shadow: 0 20px 44px -16px rgba(11, 31, 51, .75);
+}
+.combo__list[hidden] { display: none; }
+.combo__opt {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: .75rem;
+  padding: .45rem .6rem;
+  border-radius: 7px;
+  cursor: pointer;
+  color: var(--ink);
+}
+.combo__opt:hover,
+.combo__opt.is-active { background: rgba(226, 85, 60, .15); }
+.combo__opt-name { font-weight: 600; font-size: .88rem; }
+.combo__opt-meta { font-size: .72rem; color: var(--ink-40); white-space: nowrap; }
+.combo__empty { padding: .55rem .6rem; color: var(--ink-40); font-size: .85rem; }
+
 /* =========================================================================
    MAIN / PANELS
    ========================================================================= */

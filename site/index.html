@@ -44,13 +44,15 @@
           <option value="School Committee">School Committee</option>
         </select>
       </label>
-      <label class="ff ff--grow">
+      <div class="ff ff--grow">
         <span class="ff__label">Politician</span>
-        <input id="f-politician" type="text" list="politician-list"
-               placeholder="All candidates — type to search…" autocomplete="off"
-               spellcheck="false">
-        <datalist id="politician-list"></datalist>
-      </label>
+        <div class="combo" id="pol-combo">
+          <input id="f-politician" type="text" placeholder="All candidates — click or type…"
+                 autocomplete="off" spellcheck="false" role="combobox"
+                 aria-expanded="false" aria-controls="pol-list" aria-autocomplete="list">
+          <ul id="pol-list" class="combo__list" role="listbox" hidden></ul>
+        </div>
+      </div>
       <label class="ff ff--grow">
         <span class="ff__label">Donor search</span>
         <input id="f-donor" type="search" placeholder="Filter donors by name…"

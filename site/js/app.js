@@ -208,24 +208,104 @@ function renderDonors(rows) {
 }
 
 // ---------------------------------------------------------------------------
-// POLITICIAN OPTIONS — cascade under current Town + Office, by total raised.
+// POLITICIAN COMBOBOX — a real searchable dropdown (cascades under Town+Office).
+// A native <datalist> won't reliably show its options on click, so we render our
+// own list: it opens on focus/click AND filters as you type.
 // ---------------------------------------------------------------------------
-function refreshPoliticianList() {
+let polOptions = [];     // [{name, town, office, total}] cascaded, sorted by total
+let polActiveIdx = -1;   // keyboard-highlighted option index
+
+function rebuildPolOptions() {
   const rows = ROWS.filter((r) =>
     (!state.town || r.town === state.town) &&
     (!state.office || r.office === state.office));
-  const totals = new Map();
-  const meta = new Map();
+  const totals = new Map(), meta = new Map();
   for (const r of rows) {
     totals.set(r.recipient, (totals.get(r.recipient) || 0) + r.amount);
     if (!meta.has(r.recipient)) meta.set(r.recipient, { town: r.town, office: r.office });
   }
-  const names = [...totals.keys()].sort((a, b) => totals.get(b) - totals.get(a));
-  const dl = document.getElementById("politician-list");
-  dl.innerHTML = names.map((n) => {
-    const m = meta.get(n);
-    return `<option value="${esc(n)}">${esc(m.town)} · ${esc(m.office)} · ${fmt(totals.get(n))}</option>`;
-  }).join("");
+  polOptions = [...totals.keys()]
+    .sort((a, b) => totals.get(b) - totals.get(a))
+    .map((name) => ({ name, total: totals.get(name), ...meta.get(name) }));
+}
+
+function polVisibleOptions() {
+  const q = document.getElementById("f-politician").value.trim().toLowerCase();
+  // Empty box, or box still showing the current pick, → show the FULL list.
+  if (!q || (state.politician && q === state.politician.toLowerCase())) return polOptions;
+  return polOptions.filter((o) => o.name.toLowerCase().includes(q));
+}
+
+function renderPolList() {
+  const list = document.getElementById("pol-list");
+  const opts = polVisibleOptions();
+  polActiveIdx = -1;
+  list.innerHTML = opts.length
+    ? opts.map((o) =>
+        `<li class="combo__opt" role="option" data-name="${esc(o.name)}">
+           <span class="combo__opt-name">${esc(o.name)}</span>
+           <span class="combo__opt-meta">${esc(o.town)} · ${fmt(o.total)}</span>
+         </li>`).join("")
+    : `<li class="combo__empty" role="presentation">No matching candidates</li>`;
+}
+
+function openPolList() {
+  renderPolList();
+  document.getElementById("pol-list").hidden = false;
+  document.getElementById("f-politician").setAttribute("aria-expanded", "true");
+}
+function closePolList() {
+  document.getElementById("pol-list").hidden = true;
+  document.getElementById("f-politician").setAttribute("aria-expanded", "false");
+  polActiveIdx = -1;
+}
+function choosePolitician(name) {
+  state.politician = name;                       // "" clears the focus
+  document.getElementById("f-politician").value = name;
+  closePolList();
+  render();
+}
+
+function setupPoliticianCombo() {
+  const input = document.getElementById("f-politician");
+  const list = document.getElementById("pol-list");
+
+  input.addEventListener("focus", openPolList);
+  input.addEventListener("click", openPolList);
+  input.addEventListener("input", () => {
+    if (input.value.trim() === "" && state.politician) { state.politician = ""; render(); }
+    openPolList();
+  });
+  // mousedown beats the input's blur, so the option click actually registers.
+  list.addEventListener("mousedown", (e) => {
+    const li = e.target.closest(".combo__opt");
+    if (!li) return;
+    e.preventDefault();
+    choosePolitician(li.dataset.name);
+  });
+  input.addEventListener("keydown", (e) => {
+    const opts = [...list.querySelectorAll(".combo__opt")];
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (list.hidden) openPolList();
+      polActiveIdx = Math.min(polActiveIdx + 1, opts.length - 1);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      polActiveIdx = Math.max(polActiveIdx - 1, 0);
+    } else if (e.key === "Enter") {
+      if (opts[polActiveIdx]) { e.preventDefault(); choosePolitician(opts[polActiveIdx].dataset.name); }
+      return;
+    } else if (e.key === "Escape") {
+      closePolList(); return;
+    } else { return; }
+    opts.forEach((o, i) => o.classList.toggle("is-active", i === polActiveIdx));
+    if (opts[polActiveIdx]) opts[polActiveIdx].scrollIntoView({ block: "nearest" });
+  });
+  // On blur, close and discard any un-chosen typing (re-sync to the real selection).
+  input.addEventListener("blur", () => setTimeout(() => {
+    closePolList();
+    if (input.value !== state.politician) input.value = state.politician;
+  }, 130));
 }
 
 // ---------------------------------------------------------------------------
@@ -329,50 +409,24 @@ function wireControls() {
   const donorInput = document.getElementById("f-donor");
   const reset = document.getElementById("f-reset");
 
-  // Set of all valid recipient names (for validating the politician input).
-  const allNames = new Set(ROWS.map((r) => r.recipient));
+  // Drop the selected politician if it no longer fits the current Town+Office.
+  function clearPoliticianIfUnfit() {
+    if (!state.politician) return;
+    const fits = ROWS.some((r) => r.recipient === state.politician &&
+      (!state.town || r.town === state.town) &&
+      (!state.office || r.office === state.office));
+    if (!fits) { state.politician = ""; polInput.value = ""; }
+  }
 
-  function commitPolitician() {
-    const v = polInput.value.trim();
-    state.politician = allNames.has(v) ? v : "";
-    if (!state.politician) polInput.value = v === "" ? "" : polInput.value;
+  function onScopeChange() {
+    clearPoliticianIfUnfit();
+    rebuildPolOptions();
+    if (!document.getElementById("pol-list").hidden) renderPolList();
     render();
   }
 
-  townSel.addEventListener("change", () => {
-    state.town = townSel.value;
-    // If the chosen politician no longer fits Town+Office, clear it.
-    if (state.politician) {
-      const fits = ROWS.some((r) => r.recipient === state.politician &&
-        (!state.town || r.town === state.town) &&
-        (!state.office || r.office === state.office));
-      if (!fits) { state.politician = ""; polInput.value = ""; }
-    }
-    refreshPoliticianList();
-    render();
-  });
-
-  officeSel.addEventListener("change", () => {
-    state.office = officeSel.value;
-    if (state.politician) {
-      const fits = ROWS.some((r) => r.recipient === state.politician &&
-        (!state.town || r.town === state.town) &&
-        (!state.office || r.office === state.office));
-      if (!fits) { state.politician = ""; polInput.value = ""; }
-    }
-    refreshPoliticianList();
-    render();
-  });
-
-  // datalist selection fires "input"; also handle typed exact matches + clearing.
-  polInput.addEventListener("change", commitPolitician);
-  polInput.addEventListener("input", () => {
-    // Commit immediately when the typed value is an exact candidate (datalist pick),
-    // or when cleared.
-    if (allNames.has(polInput.value.trim()) || polInput.value.trim() === "") {
-      commitPolitician();
-    }
-  });
+  townSel.addEventListener("change", () => { state.town = townSel.value; onScopeChange(); });
+  officeSel.addEventListener("change", () => { state.office = officeSel.value; onScopeChange(); });
 
   // Donor search narrows ONLY the donors table; debounce keystrokes lightly.
   let donorTimer = null;
@@ -388,7 +442,8 @@ function wireControls() {
     state.town = state.office = state.politician = state.donor = "";
     townSel.value = officeSel.value = "";
     polInput.value = donorInput.value = "";
-    refreshPoliticianList();
+    rebuildPolOptions();
+    closePolList();
     render();
   });
 }
@@ -410,8 +465,9 @@ function wireControls() {
       type: r[F.type],
     }));
 
-    refreshPoliticianList();
+    rebuildPolOptions();
     wireControls();
+    setupPoliticianCombo();
     render();
     document.body.classList.add("is-ready");
   } catch (e) {
