@@ -1,4 +1,5 @@
 """ERTS (RI Board of Elections) specific access. All site quirks live here."""
+import time
 from urllib.parse import urlparse, parse_qs
 
 ERTS_BASE = "https://www.ricampaignfinance.com/RIPublic"
@@ -31,3 +32,121 @@ def build_report_url(org_id: str) -> str:
         "&Level=S"
         "&SumBy=Type"
     )
+
+
+# --- Live committee discovery -------------------------------------------------
+#
+# Flow established by exploring the live site (ASP.NET WebForms, no UpdatePanel,
+# all state in __VIEWSTATE):
+#
+#   1. Contributions.aspx has a "New Organization Search" button (#lnkSearchOrg)
+#      that reveals an inline org-search panel with:
+#         #txtOrgCity        - free-text City filter (contains-match)
+#         #lstOffice         - Office <select> (Mayor/Administrator, etc.)
+#         #lstDisplayResults - results-per-page (default "All", so no paging)
+#         #lnkSubSearchOrg   - the org-search submit button
+#   2. Submitting renders a results <table id="dgdOrgSearchResults"> with a
+#      header row + one row per committee. Columns:
+#         [0] Organization Name (an <a> whose href is a __doPostBack selecting
+#             that org -- the link control id is dgdOrgSearchResults_ctlNN_lnkOrgID)
+#         [1] Address  [2] City  [3] State  [4] Status (Active/Inactive)
+#      The numeric OrgID is NOT present in the DOM -- it lives only in viewstate.
+#   3. To resolve a row's OrgID: fire its postback to select the org, then click
+#      the main search button (#btnSearch). The page then navigates to
+#      Reporting/TransactionReport.aspx?OrgID=<digits>&... -- org_id_from_href
+#      pulls the OrgID out of that URL.
+#
+# Because OrgID resolution navigates away from the result list, we re-run the
+# org search once per committee to restore the list before selecting the next
+# row (reliable, if chatty -- this is a one-time discovery pass).
+
+ORG_RESULTS_TABLE_ID = "dgdOrgSearchResults"
+
+
+def _open_org_search(page, city: str, office: str) -> None:
+    """Open the org-search panel, fill City + Office, request all results, submit."""
+    page.goto(CONTRIBUTIONS_URL, wait_until="networkidle")
+    page.locator("#lnkSearchOrg").click()
+    page.locator("#txtOrgCity").wait_for(state="visible")
+    page.locator("#txtOrgCity").fill(city)
+    page.locator("#lstOffice").select_option(label=office)
+    # Ask for every result on one page so there is nothing to paginate.
+    try:
+        page.locator("#lstDisplayResults").select_option(label="All")
+    except Exception:
+        pass
+    page.locator("#lnkSubSearchOrg").click()
+    page.wait_for_load_state("networkidle")
+
+
+def _read_org_rows(page) -> list[dict]:
+    """Read name/city/status/postback-control for each committee row, or []."""
+    return page.evaluate(
+        """(tableId) => {
+            const t = document.getElementById(tableId);
+            if (!t) return [];
+            const rows = [];
+            for (let i = 1; i < t.rows.length; i++) {
+                const r = t.rows[i];
+                if (r.cells.length < 5) continue;
+                const a = r.cells[0].querySelector('a');
+                if (!a) continue;
+                // a.id looks like dgdOrgSearchResults_ctl02_lnkOrgID;
+                // the postback target uses '$' separators.
+                const target = a.id.replace(/_/g, '$');
+                rows.push({
+                    target,
+                    name: r.cells[0].textContent.replace(/\\s+/g, ' ').trim(),
+                    city: r.cells[2].textContent.replace(/\\s+/g, ' ').trim(),
+                    status: r.cells[4].textContent.replace(/\\s+/g, ' ').trim(),
+                });
+            }
+            return rows;
+        }""",
+        ORG_RESULTS_TABLE_ID,
+    )
+
+
+def _resolve_org_id(page, target: str) -> str | None:
+    """Select the org via its postback then submit to land on TransactionReport;
+    return the numeric OrgID parsed from the resulting URL, or None."""
+    page.evaluate("(t) => { __doPostBack(t, ''); }", target)
+    page.wait_for_load_state("networkidle")
+    page.locator("#btnSearch").click()
+    page.wait_for_load_state("networkidle")
+    return org_id_from_href(page.url)
+
+
+def discover_committees(page, towns=None, offices=None) -> list[dict]:
+    """Enumerate municipal committees across ``towns`` x ``offices`` on the live
+    ERTS site. Returns a list of {org_id, name, office, town, status}, deduped by
+    org_id."""
+    towns = towns or TOWNS
+    offices = offices or OFFICES
+    found: dict[str, dict] = {}
+    for town in towns:
+        for office in offices:
+            _open_org_search(page, town, office)
+            rows = _read_org_rows(page)
+            print(f"[discover] {town} / {office}: {len(rows)} committees", flush=True)
+            time.sleep(1)
+            for i, row in enumerate(rows):
+                org_id = _resolve_org_id(page, row["target"])
+                if (i + 1) % 10 == 0:
+                    print(f"[discover]   {town}/{office}: {i + 1}/{len(rows)} resolved", flush=True)
+                if org_id and org_id not in found:
+                    found[org_id] = {
+                        "org_id": org_id,
+                        "name": row["name"],
+                        "office": office,
+                        "town": town,
+                        "status": "active"
+                        if row["status"].strip().lower() == "active"
+                        else "inactive",
+                    }
+                time.sleep(1)
+                # Resolving an OrgID navigates away from the result list, so
+                # restore it before selecting the next row.
+                if i + 1 < len(rows):
+                    _open_org_search(page, town, office)
+    return list(found.values())
