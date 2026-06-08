@@ -296,11 +296,16 @@ body {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  right: 0;
+  right: auto;
   z-index: 40;
   margin: 0;
   padding: .25rem;
   list-style: none;
+  /* Grow to fit candidate names instead of wrapping them; cap so it never
+     runs off-screen. min-width keeps it at least as wide as the input. */
+  min-width: 100%;
+  width: max-content;
+  max-width: min(26rem, 90vw);
   max-height: 300px;
   overflow-y: auto;
   background: #fbf8f1;
@@ -312,17 +317,30 @@ body {
 .combo__opt {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
-  gap: .75rem;
-  padding: .45rem .6rem;
+  align-items: center;
+  gap: .85rem;
+  padding: .4rem .6rem;
   border-radius: 7px;
   cursor: pointer;
   color: var(--ink);
 }
 .combo__opt:hover,
 .combo__opt.is-active { background: rgba(226, 85, 60, .15); }
-.combo__opt-name { font-weight: 600; font-size: .88rem; }
-.combo__opt-meta { font-size: .72rem; color: var(--ink-40); white-space: nowrap; }
+.combo__opt-name {
+  font-weight: 600;
+  font-size: .88rem;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;          /* allows the name to ellipsize inside the flex row */
+}
+.combo__opt-meta {
+  font-size: .72rem;
+  color: var(--ink-40);
+  white-space: nowrap;
+  flex-shrink: 0;        /* meta keeps its width; name yields first */
+}
 .combo__empty { padding: .55rem .6rem; color: var(--ink-40); font-size: .85rem; }
 
 /* =========================================================================
