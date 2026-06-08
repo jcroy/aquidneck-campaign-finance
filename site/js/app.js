@@ -313,10 +313,16 @@ function setupPoliticianCombo() {
 // ---------------------------------------------------------------------------
 function renderCandidate() {
   const detail = document.getElementById("candidate-detail");
-  if (!state.politician) {
-    detail.innerHTML = `<p class="cand-empty">Select a politician in the filter bar to see their donors and funding trend.</p>`;
-    return;
-  }
+  // Politician picked → who funds them. Otherwise a donor search → which
+  // candidates that donor funds. Otherwise a prompt.
+  if (state.politician) { renderCandidateCard(detail); return; }
+  const q = state.donor.trim();
+  if (q) { renderDonorCard(detail, q); return; }
+  detail.innerHTML = `<p class="cand-empty">Select a politician — or search a donor above — to follow the money.</p>`;
+}
+
+// Candidate view: the backers behind one politician.
+function renderCandidateCard(detail) {
   const rows = ROWS.filter((r) => r.recipient === state.politician);
   if (!rows.length) {
     detail.innerHTML = `<p class="cand-empty">No contributions found for “${esc(state.politician)}”.</p>`;
@@ -388,6 +394,77 @@ function renderCandidate() {
     </article>`;
 }
 
+// Donor view: which candidates a searched donor funds. Scoped to Town+Office
+// (but not Politician — when a politician is picked we show the candidate card
+// instead). The donor search is a substring, so it may match several donors;
+// when it resolves to exactly one we title the card with that donor's name.
+function renderDonorCard(detail, q) {
+  const ql = q.toLowerCase();
+  const scope = ROWS.filter((r) =>
+    (!state.town || r.town === state.town) &&
+    (!state.office || r.office === state.office) &&
+    (r.donor || "").toLowerCase().includes(ql));
+  if (!scope.length) {
+    detail.innerHTML = `<p class="cand-empty">No donors match “${esc(q)}” in this view.</p>`;
+    return;
+  }
+
+  let total = 0;
+  const donorKeys = new Set();
+  const byCand = new Map();   // recipient -> {town, office, total, gifts}
+  for (const r of scope) {
+    total += r.amount;
+    donorKeys.add(r.donorKey);
+    let c = byCand.get(r.recipient);
+    if (!c) { c = { town: r.town, office: r.office, total: 0, gifts: 0 }; byCand.set(r.recipient, c); }
+    c.total += r.amount;
+    c.gifts += 1;
+  }
+  const gifts = scope.length;
+  const avg = total / gifts;
+  const cands = [...byCand.entries()].sort((a, b) => b[1].total - a[1].total);
+
+  // One matched donor → its real name + city; several → summarize the search.
+  const single = donorKeys.size === 1;
+  const name = single ? scope[0].donor : `Donors matching “${q}”`;
+  const meta = single
+    ? (scope[0].city || "Donor")
+    : `${donorKeys.size.toLocaleString()} donors · ${cands.length} candidate${cands.length === 1 ? "" : "s"}`;
+
+  const cmax = Math.max(...cands.map(([, c]) => c.total), 1);
+  const candRows = cands.map(([cn, c], n) => {
+    const pct = Math.max((c.total / cmax) * 100, 4);
+    return `
+    <li class="cd-donor">
+      <span class="cd-donor__rank">${n + 1}</span>
+      <span class="cd-donor__name">${esc(cn)}</span>
+      <span class="cd-donor__track"><span class="cd-donor__fill" style="width:${pct}%"></span></span>
+      <span class="cd-donor__amt num">${fmt(c.total)}</span>
+    </li>`;
+  }).join("");
+
+  detail.innerHTML = `
+    <article class="cand-card">
+      <header class="cand-card__head">
+        <div>
+          <h3 class="cand-card__name">${esc(name)}</h3>
+          <p class="cand-card__meta">${esc(meta)}</p>
+        </div>
+        <div class="cand-card__total">
+          <span class="num">${fmt(total)}</span>
+          <span class="cand-card__total-label">given</span>
+        </div>
+      </header>
+      <ul class="cand-card__stats">
+        <li><span class="num">${cands.length.toLocaleString()}</span><span>candidates</span></li>
+        <li><span class="num">${gifts.toLocaleString()}</span><span>gifts</span></li>
+        <li><span class="num">${fmt(avg)}</span><span>avg gift</span></li>
+      </ul>
+      <p class="cand-card__lead">Candidates funded</p>
+      <ol class="cd-donors">${candRows}</ol>
+    </article>`;
+}
+
 // ---------------------------------------------------------------------------
 // RENDER — recompute every view from the current filter state.
 // ---------------------------------------------------------------------------
@@ -428,13 +505,15 @@ function wireControls() {
   townSel.addEventListener("change", () => { state.town = townSel.value; onScopeChange(); });
   officeSel.addEventListener("change", () => { state.office = officeSel.value; onScopeChange(); });
 
-  // Donor search narrows ONLY the donors table; debounce keystrokes lightly.
+  // Donor search narrows the donors table AND (when no politician is picked)
+  // drives the candidate section to the candidates that donor funds. Debounced.
   let donorTimer = null;
   donorInput.addEventListener("input", () => {
     clearTimeout(donorTimer);
     donorTimer = setTimeout(() => {
       state.donor = donorInput.value;
       renderDonors(globalRows());
+      renderCandidate();
     }, 120);
   });
 
