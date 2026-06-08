@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aquidneck Island — Who Funds Local Office</title>
+  <meta name="description" content="Follow the money behind Newport, Middletown, and Portsmouth municipal campaigns. A transparency dashboard built on RI Board of Elections data.">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..700&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="js/vendor/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="hero">
+    <div class="hero__inner">
+      <p class="hero__eyebrow">Campaign Finance · Transparency Report</p>
+      <h1>Aquidneck Island —<br><em>Who Funds Local Office</em></h1>
+      <p class="subtitle">Newport · Middletown · Portsmouth <span id="date-range"></span></p>
+      <div class="stat-row" id="headline-stats"></div>
+      <div class="town-chips" id="town-chips"></div>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel" id="panel-timeline">
+      <div class="panel__head">
+        <span class="panel__kicker">01</span>
+        <h2>Money Over Time</h2>
+        <p class="panel__note">Total contributions reported per election cycle.</p>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="timeline-chart" height="120"></canvas>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-donors">
+      <div class="panel__head">
+        <span class="panel__kicker">02</span>
+        <h2>Top Donors to Local Politicians</h2>
+        <p class="panel__note">Ranked by total given. Donors are grouped by name and ZIP.</p>
+      </div>
+      <div class="table-wrap">
+        <table id="donors-table">
+          <thead><tr>
+            <th class="col-rank" aria-label="Rank">#</th>
+            <th>Donor</th><th>City</th>
+            <th class="num">Total</th>
+            <th class="num">Gifts</th>
+            <th class="num">Candidates</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-candidates">
+      <div class="panel__head">
+        <span class="panel__kicker">03</span>
+        <h2>By Candidate</h2>
+        <p class="panel__note">Filter by town, then choose a candidate to see their backers.</p>
+      </div>
+      <div class="filters">
+        <label class="field">
+          <span class="field__label">Town</span>
+          <select id="town-filter">
+            <option>All</option><option>Newport</option>
+            <option>Middletown</option><option>Portsmouth</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="field__label">Candidate</span>
+          <select id="candidate-select"></select>
+        </label>
+      </div>
+      <div id="candidate-detail"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Source: RI Board of Elections (ricampaignfinance.com). Donor grouping is approximate
+       (name + ZIP). Data ~2002–present. Built for transparency, not affiliated with any campaign.</p>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

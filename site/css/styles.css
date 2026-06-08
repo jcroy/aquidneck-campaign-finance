@@ -1,0 +1,565 @@
+/* =========================================================================
+   Aquidneck Island — Who Funds Local Office
+   Editorial / civic-investigative aesthetic.
+   Deep nautical ink + warm paper + signal-coral accent + brass.
+   ========================================================================= */
+
+:root {
+  --ink:        #0b1f33;   /* deep nautical navy            */
+  --ink-80:     #1a3650;
+  --ink-40:     rgba(11, 31, 51, .42);
+  --ink-20:     rgba(11, 31, 51, .14);
+  --paper:      #f4efe6;   /* warm newsprint cream         */
+  --paper-2:    #fbf8f1;   /* lighter card paper           */
+  --accent:     #e2553c;   /* signal coral — "the money"   */
+  --accent-deep:#c43d27;
+  --brass:      #b6892f;   /* muted gold secondary accent  */
+  --line:       rgba(11, 31, 51, .12);
+
+  --serif: "Fraunces", Georgia, "Times New Roman", serif;
+  --sans:  "Archivo", system-ui, -apple-system, sans-serif;
+
+  --maxw: 1080px;
+  --r: 14px;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--sans);
+  color: var(--ink);
+  background: var(--paper);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.num { font-variant-numeric: tabular-nums lining-nums; font-feature-settings: "tnum" 1; }
+
+::selection { background: var(--accent); color: #fff; }
+
+/* ---- Film-grain texture overlay (subtle, screenshot-friendly) ---------- */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: .035;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* =========================================================================
+   HERO — the shareable centerpiece
+   ========================================================================= */
+.hero {
+  position: relative;
+  overflow: hidden;
+  color: #f4efe6;
+  background:
+    radial-gradient(120% 140% at 88% -20%, rgba(226,85,60,.30), transparent 55%),
+    radial-gradient(90% 120% at 0% 120%, rgba(182,137,47,.22), transparent 50%),
+    linear-gradient(160deg, #0d2236 0%, #0b1f33 45%, #081726 100%);
+  border-bottom: 3px solid var(--accent);
+}
+
+/* faint nautical contour / topographic line texture */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .5;
+  background-image:
+    repeating-linear-gradient(115deg, rgba(255,255,255,.035) 0 1px, transparent 1px 46px),
+    repeating-radial-gradient(circle at 90% 0%, rgba(255,255,255,.05) 0 1px, transparent 1px 70px);
+  -webkit-mask-image: linear-gradient(160deg, #000, transparent 80%);
+          mask-image: linear-gradient(160deg, #000, transparent 80%);
+}
+
+.hero__inner {
+  position: relative;
+  z-index: 2;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: clamp(2.4rem, 6vw, 4.6rem) clamp(1.25rem, 5vw, 2.75rem) clamp(2rem, 4vw, 3rem);
+}
+
+.hero__eyebrow {
+  margin: 0 0 1.1rem;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .26em;
+  text-transform: uppercase;
+  color: var(--brass);
+  display: inline-flex;
+  align-items: center;
+  gap: .7rem;
+}
+.hero__eyebrow::before {
+  content: "";
+  width: 34px; height: 2px;
+  background: var(--accent);
+}
+
+.hero h1 {
+  margin: 0 0 .65rem;
+  font-family: var(--serif);
+  font-weight: 600;
+  font-optical-sizing: auto;
+  font-size: clamp(2.3rem, 6.4vw, 4.7rem);
+  line-height: .98;
+  letter-spacing: -.018em;
+}
+.hero h1 em {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--accent);
+}
+
+.subtitle {
+  margin: 0 0 2.2rem;
+  font-size: clamp(.95rem, 2vw, 1.12rem);
+  color: rgba(244,239,230,.72);
+  font-weight: 500;
+  letter-spacing: .01em;
+}
+#date-range { color: var(--brass); white-space: nowrap; }
+
+/* ---- Headline stats ---------------------------------------------------- */
+.stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(1.4rem, 4vw, 3.4rem);
+  align-items: flex-end;
+  padding-top: .4rem;
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.stat + .stat::before {
+  content: "";
+  position: absolute;
+  left: clamp(-.7rem, -2vw, -1.7rem);
+  top: 12%; bottom: 12%;
+  width: 1px;
+  background: rgba(244,239,230,.18);
+}
+.stat .num {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(2.1rem, 6.5vw, 4.1rem);
+  line-height: 1;
+  letter-spacing: -.02em;
+}
+.stat:first-child .num { color: var(--accent); }
+.stat__label {
+  margin-top: .35rem;
+  font-size: .74rem;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: rgba(244,239,230,.6);
+}
+
+/* ---- Town ledger chips ------------------------------------------------- */
+.town-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+  margin-top: 2rem;
+}
+.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: .55rem;
+  padding: .42rem .9rem .42rem .8rem;
+  border: 1px solid rgba(244,239,230,.22);
+  border-radius: 999px;
+  background: rgba(255,255,255,.04);
+  backdrop-filter: blur(2px);
+  font-size: .9rem;
+}
+.chip__town { font-weight: 600; letter-spacing: .01em; }
+.chip__amt {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--brass);
+}
+
+/* =========================================================================
+   MAIN / PANELS
+   ========================================================================= */
+main {
+  position: relative;
+  z-index: 2;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: clamp(2rem, 5vw, 3.5rem) clamp(1.25rem, 5vw, 2.75rem) 1rem;
+}
+
+.panel {
+  margin: 0 0 clamp(2.5rem, 6vw, 4rem);
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: clamp(1.4rem, 3.5vw, 2.3rem);
+  box-shadow: 0 1px 0 rgba(255,255,255,.7) inset,
+              0 18px 40px -28px rgba(11,31,51,.55);
+}
+
+.panel__head {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas: "kicker title" "kicker note";
+  column-gap: 1rem;
+  align-items: baseline;
+  margin-bottom: 1.6rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--line);
+}
+.panel__kicker {
+  grid-area: kicker;
+  align-self: start;
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 1rem;
+  color: #fff;
+  background: var(--accent);
+  width: 2.1rem; height: 2.1rem;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 8px;
+  box-shadow: 0 6px 16px -8px var(--accent);
+}
+.panel__head h2 {
+  grid-area: title;
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(1.35rem, 3.4vw, 1.95rem);
+  line-height: 1.05;
+  letter-spacing: -.012em;
+}
+.panel__note {
+  grid-area: note;
+  margin: .35rem 0 0;
+  font-size: .9rem;
+  color: var(--ink-40);
+  max-width: 56ch;
+}
+
+/* ---- Chart ------------------------------------------------------------- */
+.chart-wrap {
+  position: relative;
+  height: clamp(220px, 38vw, 320px);
+}
+
+/* =========================================================================
+   DONORS TABLE — financial-ledger styling with relative-total bars
+   ========================================================================= */
+.table-wrap { overflow-x: auto; }
+
+#donors-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 540px;
+}
+#donors-table th {
+  text-align: left;
+  padding: 0 .85rem .75rem;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink-40);
+  border-bottom: 2px solid var(--ink);
+}
+#donors-table th.num, #donors-table td.num { text-align: right; }
+#donors-table th.col-rank, #donors-table td.col-rank { text-align: center; width: 2.5rem; }
+
+#donors-table td {
+  padding: .72rem .85rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+  font-size: .95rem;
+}
+#donors-table tbody tr {
+  transition: background .18s ease;
+  /* staggered fade-in on load */
+  opacity: 0;
+  animation: rowIn .5s ease forwards;
+  animation-delay: calc(var(--row, 0) * 55ms + .15s);
+}
+#donors-table tbody tr:hover { background: rgba(226,85,60,.06); }
+#donors-table tbody tr:first-child td { font-weight: 600; }
+
+.col-rank {
+  font-family: var(--serif);
+  font-weight: 600;
+  color: var(--ink-40);
+  font-variant-numeric: tabular-nums;
+}
+#donors-table tbody tr:nth-child(-n+3) .col-rank { color: var(--accent); }
+
+.donor-name {
+  position: relative;
+  font-weight: 600;
+  isolation: isolate;
+}
+.donor-name .bar {
+  position: absolute;
+  left: 0; top: 50%;
+  transform: translateY(-50%);
+  height: 1.9rem;
+  border-radius: 5px;
+  background: linear-gradient(90deg, rgba(226,85,60,.16), rgba(226,85,60,.05));
+  z-index: -1;
+  transform-origin: left;
+  animation: barGrow .7s cubic-bezier(.22,1,.36,1) forwards;
+  animation-delay: calc(var(--row, 0) * 55ms + .25s);
+  scale: 0 1;
+}
+.donor-name__text { position: relative; }
+.city { color: var(--ink-80); font-size: .9rem; }
+.num.strong { font-weight: 700; }
+
+/* =========================================================================
+   CANDIDATE SECTION
+   ========================================================================= */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.4rem;
+  margin-bottom: 1.6rem;
+}
+.field { display: flex; flex-direction: column; gap: .4rem; }
+.field__label {
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ink-40);
+}
+.field select {
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: var(--sans);
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--ink-20);
+  border-radius: 9px;
+  padding: .6rem 2.4rem .6rem .85rem;
+  min-width: 14rem;
+  cursor: pointer;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--accent) 50%),
+    linear-gradient(135deg, var(--accent) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) center,
+    calc(100% - 13px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.field select:hover { border-color: var(--accent); }
+.field select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(226,85,60,.2);
+}
+
+/* ---- Candidate card ---------------------------------------------------- */
+.cand-card {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background:
+    linear-gradient(180deg, #fff, var(--paper-2));
+  padding: clamp(1.2rem, 3vw, 1.9rem);
+  animation: cardIn .45s ease both;
+}
+.cand-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--line);
+}
+.cand-card__name {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(1.25rem, 3.2vw, 1.7rem);
+  line-height: 1.04;
+  letter-spacing: -.01em;
+}
+.cand-card__meta {
+  margin: .35rem 0 0;
+  font-size: .82rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--brass);
+}
+.cand-card__total { text-align: right; line-height: 1; }
+.cand-card__total .num {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(1.7rem, 5vw, 2.6rem);
+  color: var(--accent);
+  letter-spacing: -.02em;
+}
+.cand-card__total-label {
+  display: block;
+  margin-top: .25rem;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--ink-40);
+}
+
+.cand-card__stats {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.6rem 2.4rem;
+  margin: 1.2rem 0 1.6rem;
+  padding: 0;
+}
+.cand-card__stats li { display: flex; flex-direction: column; }
+.cand-card__stats .num {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+.cand-card__stats span:last-child {
+  margin-top: .3rem;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ink-40);
+}
+
+.cand-card__lead {
+  margin: 0 0 .9rem;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ink-40);
+}
+
+.cd-donors { list-style: none; margin: 0; padding: 0; display: grid; gap: .55rem; }
+.cd-donor {
+  display: grid;
+  grid-template-columns: 1.4rem minmax(7rem, 13rem) 1fr auto;
+  align-items: center;
+  gap: .8rem;
+}
+.cd-donor__rank {
+  font-family: var(--serif);
+  font-weight: 600;
+  color: var(--ink-40);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.cd-donor:first-child .cd-donor__rank { color: var(--accent); }
+.cd-donor__name {
+  font-weight: 600;
+  font-size: .95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cd-donor__track {
+  height: 9px;
+  border-radius: 999px;
+  background: var(--ink-20);
+  overflow: hidden;
+}
+.cd-donor__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-deep), var(--accent));
+  transform-origin: left;
+  animation: barGrow .65s cubic-bezier(.22,1,.36,1) both;
+  scale: 0 1;
+}
+.cd-donor__amt { font-weight: 700; font-size: .95rem; }
+
+.empty { color: var(--ink-40); font-style: italic; margin: 0; }
+
+/* =========================================================================
+   FOOTER
+   ========================================================================= */
+footer {
+  position: relative;
+  z-index: 2;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 2.5rem) clamp(1.25rem, 5vw, 2.75rem) 3rem;
+}
+footer p {
+  margin: 0;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--line);
+  color: var(--ink-40);
+  font-size: .8rem;
+  line-height: 1.6;
+  max-width: 70ch;
+}
+
+/* =========================================================================
+   MOTION
+   ========================================================================= */
+@keyframes rowIn   { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes barGrow { to { scale: 1 1; } }
+@keyframes cardIn  { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* Staggered hero reveal */
+.hero__eyebrow, .hero h1, .subtitle, .stat-row, .town-chips {
+  animation: heroIn .7s cubic-bezier(.22,1,.36,1) both;
+}
+.hero h1     { animation-delay: .06s; }
+.subtitle    { animation-delay: .14s; }
+.stat-row    { animation-delay: .22s; }
+.town-chips  { animation-delay: .30s; }
+@keyframes heroIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: .001ms !important;
+  }
+  .donor-name .bar, .cd-donor__fill { scale: 1 1; }
+}
+
+/* =========================================================================
+   RESPONSIVE
+   ========================================================================= */
+@media (max-width: 560px) {
+  .panel__head {
+    grid-template-columns: auto 1fr;
+    grid-template-areas: "kicker title" "note note";
+  }
+  .panel__note { margin-top: .7rem; }
+  .field select { min-width: 0; width: 100%; }
+  .field { width: 100%; }
+  .cd-donor { grid-template-columns: 1.2rem 1fr auto; }
+  .cd-donor__track { display: none; }
+}
