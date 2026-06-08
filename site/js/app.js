@@ -1,5 +1,11 @@
 const fmt = (n) => "$" + Math.round(n).toLocaleString();
 
+// Escape third-party text (donor/candidate/town names are self-reported filing
+// data) before interpolating into innerHTML — prevents stored XSS.
+const esc = (s) =>
+  String(s ?? "").replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
 // Design tokens, read from CSS so JS-drawn chart stays in sync with the theme.
 const css = getComputedStyle(document.documentElement);
 const INK = css.getPropertyValue("--ink").trim() || "#0b1f33";
@@ -21,7 +27,7 @@ function renderHeadline(s) {
     <div class="stat"><span class="num">${s.num_candidates}</span><span class="stat__label">candidates</span></div>
     <div class="stat"><span class="num">${s.num_donors.toLocaleString()}</span><span class="stat__label">donors</span></div>`;
   document.getElementById("town-chips").innerHTML = s.by_town
-    .map((t) => `<span class="chip"><span class="chip__town">${t.town}</span><span class="chip__amt">${fmt(t.total)}</span></span>`)
+    .map((t) => `<span class="chip"><span class="chip__town">${esc(t.town)}</span><span class="chip__amt">${fmt(t.total)}</span></span>`)
     .join("");
 }
 
@@ -90,9 +96,9 @@ function renderDonors(donors) {
       <td class="col-rank">${i + 1}</td>
       <td class="donor-name">
         <span class="bar" style="width:${pct}%"></span>
-        <span class="donor-name__text">${d.name}</span>
+        <span class="donor-name__text">${esc(d.name)}</span>
       </td>
-      <td class="city">${d.city || "—"}</td>
+      <td class="city">${esc(d.city || "—")}</td>
       <td class="num strong">${fmt(d.total)}</td>
       <td class="num">${d.gifts}</td>
       <td class="num">${d.candidates.length}</td>
@@ -113,7 +119,7 @@ function renderCandidates(cands) {
       return `
       <li class="cd-donor">
         <span class="cd-donor__rank">${n + 1}</span>
-        <span class="cd-donor__name">${d.name}</span>
+        <span class="cd-donor__name">${esc(d.name)}</span>
         <span class="cd-donor__track"><span class="cd-donor__fill" style="width:${pct}%"></span></span>
         <span class="cd-donor__amt num">${fmt(d.total)}</span>
       </li>`;
@@ -123,8 +129,8 @@ function renderCandidates(cands) {
       <article class="cand-card">
         <header class="cand-card__head">
           <div>
-            <h3 class="cand-card__name">${c.name}</h3>
-            <p class="cand-card__meta">${c.town} · ${c.office}</p>
+            <h3 class="cand-card__name">${esc(c.name)}</h3>
+            <p class="cand-card__meta">${esc(c.town)} · ${esc(c.office)}</p>
           </div>
           <div class="cand-card__total">
             <span class="num">${fmt(c.total_raised)}</span>
@@ -145,7 +151,7 @@ function renderCandidates(cands) {
     const items = cands.map((c, i) => ({ c, i }))
       .filter((x) => town === "All" || x.c.town === town);
     sel.innerHTML = items
-      .map((x) => `<option value="${x.i}">${x.c.name} — ${x.c.town} ${x.c.office}</option>`)
+      .map((x) => `<option value="${x.i}">${esc(x.c.name)} — ${esc(x.c.town)} ${esc(x.c.office)}</option>`)
       .join("");
     if (items.length) show(items[0].i);
     else detail.innerHTML = `<p class="empty">No candidates for this town.</p>`;
