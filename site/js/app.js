@@ -244,7 +244,9 @@ function renderDonors(rows) {
       <td class="num">${d.gifts}</td>
       <td class="num">${d.cands.size}</td>
     </tr>`;
-    return breakdown && d.cands.size > 1 ? row + breakdownRows(d, i) : row;
+    // Show who each donor funded — even single-candidate donors, since naming
+    // the one recipient is the whole point of a filtered view.
+    return breakdown ? row + breakdownRows(d, i) : row;
   }).join("");
 }
 
