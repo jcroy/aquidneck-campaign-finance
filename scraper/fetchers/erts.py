@@ -20,17 +20,35 @@ def org_id_from_href(href: str) -> str | None:
 
 
 def build_report_url(org_id: str) -> str:
-    """All-history contribution report URL for a committee OrgID."""
+    """All-history contribution report URL for a committee OrgID.
+
+    The TransactionReport page renders data from a *direct GET* only when the
+    full criteria parameter set produced by the Contributions.aspx Search form
+    is supplied (live-validated). A minimal URL (just OrgID + BeginDate/EndDate)
+    is silently rejected: the page falls back to a default quarter range and
+    shows "Unable to complete the search with the criteria provided." with no
+    rows -- and the export then 500s ("ExecuteReader: CommandText property has
+    not been initialized"). Empty BeginDate/EndDate here means all-history.
+    """
     return (
         f"{ERTS_BASE}/Reporting/TransactionReport.aspx"
         f"?OrgID={org_id}"
         "&BeginDate=&EndDate="
+        "&LastName=&FirstName="
+        "&ContType=0"
+        "&State=&City=&ZIPCode=&EmployerName="
+        "&Amount=0"
         "&ReportType=Contrib"
-        "&ContSource=CF"
         "&CFStatus=F"
         "&MPFStatus=A"
         "&Level=S"
         "&SumBy=Type"
+        "&Sort1=ReceiptDate&Direct1=desc"
+        "&Sort2=None&Direct2=asc"
+        "&Sort3=None&Direct3=asc"
+        "&Site=Public"
+        "&Incomplete=A"
+        "&ContSource=CF"
     )
 
 
@@ -150,3 +168,76 @@ def discover_committees(page, towns=None, offices=None) -> list[dict]:
                 if i + 1 < len(rows):
                     _open_org_search(page, town, office)
     return list(found.values())
+
+
+# --- Contribution CSV export --------------------------------------------------
+#
+# Export flow established by exploring the live site (ASP.NET WebForms):
+#
+#   1. GET build_report_url(org_id). With the full criteria param set this
+#      renders the committee's all-history Contribution Report (Summary level)
+#      WITH data and an export link #lnkExport
+#      ("(Export Detail to comma delimited file)"). If criteria are bad the page
+#      instead shows "Unable to complete the search with the criteria provided."
+#      and exporting 500s -- so we guard on that text and on a missing link.
+#   2. Clicking #lnkExport does __doPostBack('lnkExport','') which generates a
+#      server-side temp CSV and opens a NEW popup window/tab at
+#      Reporting/DownloadFile.aspx?path=...&file=<guid>.csv. That popup says
+#      "Your file has been successfully generated" and contains a link
+#      #hypFileDownload ("View/Save", __doPostBack('hypFileDownload','')).
+#   3. Clicking #hypFileDownload in the popup streams the actual .csv file
+#      (Content-Disposition: attachment), which Playwright captures via
+#      expect_download. The CSV is a 22-column ERTS export (header:
+#      ContributionID, ContDesc, IncompleteDesc, OrganizationName, ...,
+#      CityStZip, EmployerName, ..., TransType).
+#
+# Zero-contribution handling: municipal candidate committees in scope all have
+# at least some contributions, but a committee with none would render the
+# "Unable to complete" message (no result set). In that case -- or if the export
+# link is absent -- we write a header-only CSV and return 0 rather than crash,
+# so downstream parsing sees a valid (empty) file and the run stays resumable.
+
+_NO_DATA_MARKER = "Unable to complete the search"
+_CSV_HEADER = (
+    "ContributionID,ContDesc,IncompleteDesc,OrganizationName,ViewIncomplete,"
+    "ReceiptDate,DepositDate,Amount,ContribExplanation,MPFMatchAmount,FirstName,"
+    "LastName,FullName,Address,CityStZip,EmployerName,EmpAddress,EmpCityStZip,"
+    "ReceiptDesc,BeginDate,EndDate,TransType\n"
+)
+
+
+def fetch_contribution_csv(page, org_id: str, dest_path) -> int:
+    """Download a committee's all-history contribution CSV to ``dest_path``.
+
+    Returns the number of data rows (lines minus the header). A committee with
+    no contributions writes a header-only file and returns 0.
+    """
+    from pathlib import Path
+
+    dest = Path(dest_path)
+    page.goto(build_report_url(org_id), wait_until="networkidle")
+
+    # No result set (genuinely empty committee, or rejected criteria): the
+    # export would 500. Write a header-only CSV and report zero rows.
+    body = page.content()
+    export = page.locator("#lnkExport")
+    if _NO_DATA_MARKER in body or export.count() == 0:
+        dest.write_text(_CSV_HEADER, encoding="utf-8")
+        return 0
+
+    # Clicking export opens a DownloadFile.aspx popup; in that popup the
+    # "View/Save" link streams the actual CSV as a download.
+    with page.context.expect_page() as popup_info:
+        export.first.click()
+    popup = popup_info.value
+    popup.wait_for_load_state("networkidle")
+    try:
+        with popup.expect_download() as dl_info:
+            popup.locator("#hypFileDownload").click()
+        download = dl_info.value
+        download.save_as(str(dest))
+    finally:
+        popup.close()
+
+    with open(dest, encoding="utf-8", errors="replace") as fh:
+        return max(0, sum(1 for _ in fh) - 1)
