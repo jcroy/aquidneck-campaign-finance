@@ -6,3 +6,7 @@ data/raw/*.csv
 data/processed/*.parquet
 data/processed/*.csv
 .pytest_cache/
+discovery.log
+*.log
+dashboard-preview.png
+.playwright-mcp/
