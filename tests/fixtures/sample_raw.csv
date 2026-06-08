@@ -1,0 +1,9 @@
+ContributionID,ContDesc,IncompleteDesc,OrganizationName,ViewIncomplete,ReceiptDate,DepositDate,Amount,ContribExplanation,MPFMatchAmount,FirstName,LastName,FullName,Address,CityStZip,EmployerName,EmpAddress,EmpCityStZip,ReceiptDesc,BeginDate,EndDate,TransType
+1,Individual,,JANE DOE FOR COUNCIL,Complete,11/03/2020,11/05/2020,250.00,,0.00,John,Smith,JOHN SMITH,1 Main St,"NEWPORT, RI 02840",Acme,,,Check,,,Contribution
+2,PAC,,JANE DOE FOR COUNCIL,Complete,10/01/2020,,500.00,,0.00,,,CVS PAC,1275 Penn Ave,"WASHINGTON, DC 20004",,,,Check,,,Contribution
+3,Individual,,JANE DOE FOR COUNCIL,Complete,09/15/2018,09/16/2018,100.00,,0.00,Mary,Jones,MARY JONES,2 Oak St,"MIDDLETOWN, RI 02842",,,,Check,,,Contribution
+4,Refund,,JANE DOE FOR COUNCIL,Complete,11/10/2020,,-50.00,,0.00,John,Smith,JOHN SMITH,1 Main St,"NEWPORT, RI 02840",,,,Check,,,Refund
+1,Individual,,JANE DOE FOR COUNCIL,Complete,11/03/2020,11/05/2020,250.00,,0.00,John,Smith,JOHN SMITH,1 Main St,"NEWPORT, RI 02840",Acme,,,Check,,,Contribution
+5,Individual,,BOB ROE SCHOOL,Complete,06/01/2022,1/1/1900,75.00,,0.00,Sue,Lee,SUE LEE,3 Elm,"MIDDLETOWN, RI 02842",,,,Check,,,Contribution
+6,Individual,,BOB ROE SCHOOL,Complete,06/02/2022,,40.00,,0.00,A,B,AB DONOR,x,garbagecity,,,,Check,,,Contribution
+7,Individual,,BOB ROE SCHOOL,Complete,05/01/2022,,200.00,,0.00,John,Smith,JOHN SMITH,1 Main St,"NEWPORT, RI 02840",Acme,,,Check,,,Contribution

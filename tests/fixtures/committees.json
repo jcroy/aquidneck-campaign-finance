@@ -1,0 +1,4 @@
+[
+  {"org_id": "100", "name": "JANE DOE FOR COUNCIL", "office": "City/Town Council", "town": "Newport", "status": "active"},
+  {"org_id": "200", "name": "BOB ROE SCHOOL", "office": "School Committee", "town": "Middletown", "status": "inactive"}
+]
