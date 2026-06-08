@@ -194,6 +194,103 @@ body {
 }
 
 /* =========================================================================
+   STICKY FILTER BAR
+   ========================================================================= */
+.filterbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(11, 31, 51, .96);
+  color: #f4efe6;
+  border-bottom: 2px solid var(--accent);
+  box-shadow: 0 10px 30px -22px rgba(11, 31, 51, .9);
+  -webkit-backdrop-filter: blur(6px);
+          backdrop-filter: blur(6px);
+}
+.filterbar__inner {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: .7rem clamp(1.25rem, 5vw, 2.75rem);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: .7rem 1rem;
+}
+
+.ff { display: flex; flex-direction: column; gap: .3rem; min-width: 0; }
+.ff--grow { flex: 1 1 13rem; }
+.ff__label {
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--brass);
+}
+
+.ff select,
+.ff input {
+  font-family: var(--sans);
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: #fbf8f1;
+  border: 1px solid rgba(244, 239, 230, .28);
+  border-radius: 9px;
+  padding: .5rem .8rem;
+  width: 100%;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.ff select {
+  appearance: none;
+  -webkit-appearance: none;
+  min-width: 11rem;
+  cursor: pointer;
+  padding-right: 2.2rem;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--accent) 50%),
+    linear-gradient(135deg, var(--accent) 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) center,
+    calc(100% - 11px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+.ff input::placeholder { color: var(--ink-40); font-weight: 500; }
+.ff select:hover,
+.ff input:hover { border-color: var(--accent); }
+.ff select:focus-visible,
+.ff input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(226, 85, 60, .35);
+}
+
+.ff__reset {
+  font-family: var(--sans);
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #f4efe6;
+  background: transparent;
+  border: 1px solid rgba(244, 239, 230, .35);
+  border-radius: 9px;
+  padding: .55rem 1rem;
+  cursor: pointer;
+  align-self: flex-end;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.ff__reset:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.ff__reset:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(226, 85, 60, .35);
+}
+
+/* =========================================================================
    MAIN / PANELS
    ========================================================================= */
 main {
@@ -333,50 +430,6 @@ main {
 /* =========================================================================
    CANDIDATE SECTION
    ========================================================================= */
-.filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem 1.4rem;
-  margin-bottom: 1.6rem;
-}
-.field { display: flex; flex-direction: column; gap: .4rem; }
-.field__label {
-  font-size: .68rem;
-  font-weight: 700;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: var(--ink-40);
-}
-.field select {
-  appearance: none;
-  -webkit-appearance: none;
-  font-family: var(--sans);
-  font-size: .95rem;
-  font-weight: 600;
-  color: var(--ink);
-  background: #fff;
-  border: 1px solid var(--ink-20);
-  border-radius: 9px;
-  padding: .6rem 2.4rem .6rem .85rem;
-  min-width: 14rem;
-  cursor: pointer;
-  background-image:
-    linear-gradient(45deg, transparent 50%, var(--accent) 50%),
-    linear-gradient(135deg, var(--accent) 50%, transparent 50%);
-  background-position:
-    calc(100% - 18px) center,
-    calc(100% - 13px) center;
-  background-size: 5px 5px, 5px 5px;
-  background-repeat: no-repeat;
-  transition: border-color .15s ease, box-shadow .15s ease;
-}
-.field select:hover { border-color: var(--accent); }
-.field select:focus-visible {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(226,85,60,.2);
-}
-
 /* ---- Candidate card ---------------------------------------------------- */
 .cand-card {
   border: 1px solid var(--line);
@@ -503,6 +556,57 @@ main {
 
 .empty { color: var(--ink-40); font-style: italic; margin: 0; }
 
+/* ---- Candidate empty / prompt state ------------------------------------ */
+.cand-empty {
+  margin: 0;
+  padding: clamp(1.6rem, 5vw, 2.6rem);
+  border: 1px dashed var(--ink-20);
+  border-radius: var(--r);
+  background: linear-gradient(180deg, #fff, var(--paper-2));
+  color: var(--ink-40);
+  font-style: italic;
+  font-size: 1.02rem;
+  text-align: center;
+}
+
+/* ---- Per-year trend (mini bars) ---------------------------------------- */
+.cd-trend {
+  list-style: none;
+  margin: .6rem 0 0;
+  padding: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: .35rem;
+  height: 86px;
+}
+.cd-trend__bar {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+}
+.cd-trend__fill {
+  width: 100%;
+  max-width: 26px;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(180deg, var(--accent), rgba(226, 85, 60, .55));
+  transform-origin: bottom;
+  animation: barRise .6s cubic-bezier(.22, 1, .36, 1) both;
+}
+.cd-trend__yr {
+  margin-top: .3rem;
+  font-size: .6rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: var(--ink-40);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+@keyframes barRise { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
 /* =========================================================================
    FOOTER
    ========================================================================= */
@@ -558,8 +662,10 @@ footer p {
     grid-template-areas: "kicker title" "note note";
   }
   .panel__note { margin-top: .7rem; }
-  .field select { min-width: 0; width: 100%; }
-  .field { width: 100%; }
   .cd-donor { grid-template-columns: 1.2rem 1fr auto; }
   .cd-donor__track { display: none; }
+
+  .ff { flex: 1 1 100%; }
+  .ff select { min-width: 0; }
+  .ff__reset { width: 100%; align-self: stretch; text-align: center; }
 }

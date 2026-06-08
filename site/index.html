@@ -25,6 +25,41 @@
     </div>
   </header>
 
+  <div class="filterbar" id="filterbar">
+    <div class="filterbar__inner">
+      <label class="ff">
+        <span class="ff__label">Town</span>
+        <select id="f-town">
+          <option value="">All towns</option>
+          <option value="Newport">Newport</option>
+          <option value="Middletown">Middletown</option>
+          <option value="Portsmouth">Portsmouth</option>
+        </select>
+      </label>
+      <label class="ff">
+        <span class="ff__label">Office</span>
+        <select id="f-office">
+          <option value="">All offices</option>
+          <option value="City/Town Council">City/Town Council</option>
+          <option value="School Committee">School Committee</option>
+        </select>
+      </label>
+      <label class="ff ff--grow">
+        <span class="ff__label">Politician</span>
+        <input id="f-politician" type="text" list="politician-list"
+               placeholder="All candidates — type to search…" autocomplete="off"
+               spellcheck="false">
+        <datalist id="politician-list"></datalist>
+      </label>
+      <label class="ff ff--grow">
+        <span class="ff__label">Donor search</span>
+        <input id="f-donor" type="search" placeholder="Filter donors by name…"
+               autocomplete="off" spellcheck="false">
+      </label>
+      <button id="f-reset" type="button" class="ff__reset">Reset</button>
+    </div>
+  </div>
+
   <main>
     <section class="panel" id="panel-timeline">
       <div class="panel__head">
@@ -61,20 +96,7 @@
       <div class="panel__head">
         <span class="panel__kicker">03</span>
         <h2>By Candidate</h2>
-        <p class="panel__note">Filter by town, then choose a candidate to see their backers.</p>
-      </div>
-      <div class="filters">
-        <label class="field">
-          <span class="field__label">Town</span>
-          <select id="town-filter">
-            <option>All</option><option>Newport</option>
-            <option>Middletown</option><option>Portsmouth</option>
-          </select>
-        </label>
-        <label class="field">
-          <span class="field__label">Candidate</span>
-          <select id="candidate-select"></select>
-        </label>
+        <p class="panel__note">Choose a politician in the filter bar above to see their backers.</p>
       </div>
       <div id="candidate-detail"></div>
     </section>

@@ -20,31 +20,102 @@ async function load(name) {
   return res.json();
 }
 
-function renderHeadline(s) {
-  document.getElementById("date-range").textContent = `· ${s.year_min}–${s.year_max}`;
+// ---------------------------------------------------------------------------
+// Filter engine state. ROWS is the columnar dataset turned into objects once;
+// every view is recomputed live from the rows matching the current filters.
+// ---------------------------------------------------------------------------
+let ROWS = [];                 // [{recipient, town, office, donor, donorKey, city, amount, year, type}]
+let chart = null;              // Chart.js instance (recreated on filter change)
+
+const state = {
+  town: "",        // "" = all
+  office: "",      // "" = all
+  politician: "",  // exact recipient name, "" = none
+  donor: "",       // substring for the donors table only
+};
+
+// Rows matching Town + Office + Politician (the "global" filter set).
+function globalRows() {
+  return ROWS.filter((r) =>
+    (!state.town || r.town === state.town) &&
+    (!state.office || r.office === state.office) &&
+    (!state.politician || r.recipient === state.politician));
+}
+
+// ---------------------------------------------------------------------------
+// HERO
+// ---------------------------------------------------------------------------
+function renderHeadline(rows) {
+  let total = 0;
+  const cands = new Set();
+  const donors = new Set();
+  const byTown = new Map();
+  let yMin = Infinity, yMax = -Infinity;
+
+  for (const r of rows) {
+    total += r.amount;
+    cands.add(r.recipient);
+    donors.add(r.donorKey);
+    byTown.set(r.town, (byTown.get(r.town) || 0) + r.amount);
+    if (r.year != null) {
+      if (r.year < yMin) yMin = r.year;
+      if (r.year > yMax) yMax = r.year;
+    }
+  }
+
+  const range = yMin === Infinity ? "" :
+    (yMin === yMax ? `· ${yMin}` : `· ${yMin}–${yMax}`);
+  document.getElementById("date-range").textContent = range;
+
   document.getElementById("headline-stats").innerHTML = `
-    <div class="stat"><span class="num">${fmt(s.total_raised)}</span><span class="stat__label">raised</span></div>
-    <div class="stat"><span class="num">${s.num_candidates}</span><span class="stat__label">candidates</span></div>
-    <div class="stat"><span class="num">${s.num_donors.toLocaleString()}</span><span class="stat__label">donors</span></div>`;
-  document.getElementById("town-chips").innerHTML = s.by_town
-    .map((t) => `<span class="chip"><span class="chip__town">${esc(t.town)}</span><span class="chip__amt">${fmt(t.total)}</span></span>`)
+    <div class="stat"><span class="num">${fmt(total)}</span><span class="stat__label">raised</span></div>
+    <div class="stat"><span class="num">${cands.size.toLocaleString()}</span><span class="stat__label">candidates</span></div>
+    <div class="stat"><span class="num">${donors.size.toLocaleString()}</span><span class="stat__label">donors</span></div>
+    <div class="stat"><span class="num">${rows.length.toLocaleString()}</span><span class="stat__label">contributions</span></div>`;
+
+  // Per-town chips for the towns present in the current filter, sorted by total.
+  const chips = [...byTown.entries()].sort((a, b) => b[1] - a[1]);
+  document.getElementById("town-chips").innerHTML = chips
+    .map(([town, amt]) =>
+      `<span class="chip"><span class="chip__town">${esc(town)}</span><span class="chip__amt">${fmt(amt)}</span></span>`)
     .join("");
 }
 
-function renderTimeline(timeline) {
+// ---------------------------------------------------------------------------
+// TIMELINE
+// ---------------------------------------------------------------------------
+function timelineData(rows) {
+  const byYear = new Map();
+  for (const r of rows) {
+    if (r.year == null) continue;
+    byYear.set(r.year, (byYear.get(r.year) || 0) + r.amount);
+  }
+  const years = [...byYear.keys()].sort((a, b) => a - b);
+  return { labels: years, amounts: years.map((y) => byYear.get(y)) };
+}
+
+function renderTimeline(rows) {
+  const { labels, amounts } = timelineData(rows);
   const ctx = document.getElementById("timeline-chart");
-  // Vertical accent gradient for the bars.
   const g = ctx.getContext("2d").createLinearGradient(0, 0, 0, 320);
   g.addColorStop(0, ACCENT);
   g.addColorStop(1, "rgba(226,85,60,.55)");
 
-  new Chart(ctx, {
+  if (chart) {
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = amounts;
+    chart.data.datasets[0].backgroundColor = g;
+    chart.update();
+    return;
+  }
+
+  chart = new Chart(ctx, {
     type: "bar",
     data: {
-      labels: timeline.map((d) => d.year),
+      labels,
       datasets: [{
         label: "Raised",
-        data: timeline.map((d) => d.amount),
+        data: amounts,
         backgroundColor: g,
         hoverBackgroundColor: BRASS,
         borderRadius: 6,
@@ -55,6 +126,7 @@ function renderTimeline(timeline) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      animation: { duration: 350 },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -87,9 +159,38 @@ function renderTimeline(timeline) {
   });
 }
 
-function renderDonors(donors) {
+// ---------------------------------------------------------------------------
+// TOP DONORS
+// ---------------------------------------------------------------------------
+function donorAggregates(rows) {
+  const map = new Map();
+  for (const r of rows) {
+    let d = map.get(r.donorKey);
+    if (!d) {
+      d = { name: r.donor, city: r.city, total: 0, gifts: 0, cands: new Set() };
+      map.set(r.donorKey, d);
+    }
+    d.total += r.amount;
+    d.gifts += 1;
+    d.cands.add(r.recipient);
+  }
+  return [...map.values()];
+}
+
+function renderDonors(rows) {
+  let donors = donorAggregates(rows);
+  const q = state.donor.trim().toLowerCase();
+  if (q) donors = donors.filter((d) => (d.name || "").toLowerCase().includes(q));
+  donors.sort((a, b) => b.total - a.total);
+  donors = donors.slice(0, 50);
+
+  const body = document.querySelector("#donors-table tbody");
+  if (!donors.length) {
+    body.innerHTML = `<tr><td colspan="6" class="empty" style="padding:1.2rem .85rem">No donors match this filter.</td></tr>`;
+    return;
+  }
   const max = Math.max(...donors.map((d) => d.total), 1);
-  document.querySelector("#donors-table tbody").innerHTML = donors.map((d, i) => {
+  body.innerHTML = donors.map((d, i) => {
     const pct = Math.max((d.total / max) * 100, 2);
     return `
     <tr style="--row:${i}">
@@ -101,76 +202,217 @@ function renderDonors(donors) {
       <td class="city">${esc(d.city || "—")}</td>
       <td class="num strong">${fmt(d.total)}</td>
       <td class="num">${d.gifts}</td>
-      <td class="num">${d.candidates.length}</td>
+      <td class="num">${d.cands.size}</td>
     </tr>`;
   }).join("");
 }
 
-function renderCandidates(cands) {
-  const townSel = document.getElementById("town-filter");
-  const sel = document.getElementById("candidate-select");
+// ---------------------------------------------------------------------------
+// POLITICIAN OPTIONS — cascade under current Town + Office, by total raised.
+// ---------------------------------------------------------------------------
+function refreshPoliticianList() {
+  const rows = ROWS.filter((r) =>
+    (!state.town || r.town === state.town) &&
+    (!state.office || r.office === state.office));
+  const totals = new Map();
+  const meta = new Map();
+  for (const r of rows) {
+    totals.set(r.recipient, (totals.get(r.recipient) || 0) + r.amount);
+    if (!meta.has(r.recipient)) meta.set(r.recipient, { town: r.town, office: r.office });
+  }
+  const names = [...totals.keys()].sort((a, b) => totals.get(b) - totals.get(a));
+  const dl = document.getElementById("politician-list");
+  dl.innerHTML = names.map((n) => {
+    const m = meta.get(n);
+    return `<option value="${esc(n)}">${esc(m.town)} · ${esc(m.office)} · ${fmt(totals.get(n))}</option>`;
+  }).join("");
+}
+
+// ---------------------------------------------------------------------------
+// CANDIDATE DETAIL
+// ---------------------------------------------------------------------------
+function renderCandidate() {
   const detail = document.getElementById("candidate-detail");
-
-  function show(i) {
-    const c = cands[i];
-    const max = Math.max(...c.top_donors.map((d) => d.total), 1);
-    const donorRows = c.top_donors.map((d, n) => {
-      const pct = Math.max((d.total / max) * 100, 4);
-      return `
-      <li class="cd-donor">
-        <span class="cd-donor__rank">${n + 1}</span>
-        <span class="cd-donor__name">${esc(d.name)}</span>
-        <span class="cd-donor__track"><span class="cd-donor__fill" style="width:${pct}%"></span></span>
-        <span class="cd-donor__amt num">${fmt(d.total)}</span>
-      </li>`;
-    }).join("");
-
-    detail.innerHTML = `
-      <article class="cand-card">
-        <header class="cand-card__head">
-          <div>
-            <h3 class="cand-card__name">${esc(c.name)}</h3>
-            <p class="cand-card__meta">${esc(c.town)} · ${esc(c.office)}</p>
-          </div>
-          <div class="cand-card__total">
-            <span class="num">${fmt(c.total_raised)}</span>
-            <span class="cand-card__total-label">raised</span>
-          </div>
-        </header>
-        <ul class="cand-card__stats">
-          <li><span class="num">${c.num_donors}</span><span>donors</span></li>
-          <li><span class="num">${c.num_contributions}</span><span>gifts</span></li>
-          <li><span class="num">${fmt(c.avg_gift)}</span><span>avg gift</span></li>
-        </ul>
-        <p class="cand-card__lead">Largest backers</p>
-        <ol class="cd-donors">${donorRows}</ol>
-      </article>`;
+  if (!state.politician) {
+    detail.innerHTML = `<p class="cand-empty">Select a politician in the filter bar to see their donors and funding trend.</p>`;
+    return;
+  }
+  const rows = ROWS.filter((r) => r.recipient === state.politician);
+  if (!rows.length) {
+    detail.innerHTML = `<p class="cand-empty">No contributions found for “${esc(state.politician)}”.</p>`;
+    return;
   }
 
-  function populate(town) {
-    const items = cands.map((c, i) => ({ c, i }))
-      .filter((x) => town === "All" || x.c.town === town);
-    sel.innerHTML = items
-      .map((x) => `<option value="${x.i}">${esc(x.c.name)} — ${esc(x.c.town)} ${esc(x.c.office)}</option>`)
-      .join("");
-    if (items.length) show(items[0].i);
-    else detail.innerHTML = `<p class="empty">No candidates for this town.</p>`;
+  let total = 0;
+  const donorKeys = new Set();
+  const byYear = new Map();
+  for (const r of rows) {
+    total += r.amount;
+    donorKeys.add(r.donorKey);
+    if (r.year != null) byYear.set(r.year, (byYear.get(r.year) || 0) + r.amount);
+  }
+  const gifts = rows.length;
+  const avg = total / gifts;
+  const town = rows[0].town, office = rows[0].office;
+
+  const topDonors = donorAggregates(rows)
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 10);
+  const dmax = Math.max(...topDonors.map((d) => d.total), 1);
+  const donorRows = topDonors.map((d, n) => {
+    const pct = Math.max((d.total / dmax) * 100, 4);
+    return `
+    <li class="cd-donor">
+      <span class="cd-donor__rank">${n + 1}</span>
+      <span class="cd-donor__name">${esc(d.name)}</span>
+      <span class="cd-donor__track"><span class="cd-donor__fill" style="width:${pct}%"></span></span>
+      <span class="cd-donor__amt num">${fmt(d.total)}</span>
+    </li>`;
+  }).join("");
+
+  // Small per-year trend (sparkline-style bars).
+  const years = [...byYear.keys()].sort((a, b) => a - b);
+  const ymax = Math.max(...years.map((y) => byYear.get(y)), 1);
+  const trend = years.length > 1 ? `
+    <p class="cand-card__lead">Raised by year</p>
+    <ul class="cd-trend">
+      ${years.map((y) => {
+        const h = Math.max((byYear.get(y) / ymax) * 100, 4);
+        return `<li class="cd-trend__bar" title="${y}: ${fmt(byYear.get(y))}">
+                  <span class="cd-trend__fill" style="height:${h}%"></span>
+                  <span class="cd-trend__yr">${esc(String(y))}</span>
+                </li>`;
+      }).join("")}
+    </ul>` : "";
+
+  detail.innerHTML = `
+    <article class="cand-card">
+      <header class="cand-card__head">
+        <div>
+          <h3 class="cand-card__name">${esc(state.politician)}</h3>
+          <p class="cand-card__meta">${esc(town)} · ${esc(office)}</p>
+        </div>
+        <div class="cand-card__total">
+          <span class="num">${fmt(total)}</span>
+          <span class="cand-card__total-label">raised</span>
+        </div>
+      </header>
+      <ul class="cand-card__stats">
+        <li><span class="num">${donorKeys.size.toLocaleString()}</span><span>donors</span></li>
+        <li><span class="num">${gifts.toLocaleString()}</span><span>gifts</span></li>
+        <li><span class="num">${fmt(avg)}</span><span>avg gift</span></li>
+      </ul>
+      <p class="cand-card__lead">Largest backers</p>
+      <ol class="cd-donors">${donorRows}</ol>
+      ${trend}
+    </article>`;
+}
+
+// ---------------------------------------------------------------------------
+// RENDER — recompute every view from the current filter state.
+// ---------------------------------------------------------------------------
+function render() {
+  const rows = globalRows();
+  renderHeadline(rows);
+  renderTimeline(rows);
+  renderDonors(rows);
+  renderCandidate();
+}
+
+// ---------------------------------------------------------------------------
+// WIRING
+// ---------------------------------------------------------------------------
+function wireControls() {
+  const townSel = document.getElementById("f-town");
+  const officeSel = document.getElementById("f-office");
+  const polInput = document.getElementById("f-politician");
+  const donorInput = document.getElementById("f-donor");
+  const reset = document.getElementById("f-reset");
+
+  // Set of all valid recipient names (for validating the politician input).
+  const allNames = new Set(ROWS.map((r) => r.recipient));
+
+  function commitPolitician() {
+    const v = polInput.value.trim();
+    state.politician = allNames.has(v) ? v : "";
+    if (!state.politician) polInput.value = v === "" ? "" : polInput.value;
+    render();
   }
 
-  townSel.addEventListener("change", (e) => populate(e.target.value));
-  sel.addEventListener("change", (e) => show(Number(e.target.value)));
-  populate("All");
+  townSel.addEventListener("change", () => {
+    state.town = townSel.value;
+    // If the chosen politician no longer fits Town+Office, clear it.
+    if (state.politician) {
+      const fits = ROWS.some((r) => r.recipient === state.politician &&
+        (!state.town || r.town === state.town) &&
+        (!state.office || r.office === state.office));
+      if (!fits) { state.politician = ""; polInput.value = ""; }
+    }
+    refreshPoliticianList();
+    render();
+  });
+
+  officeSel.addEventListener("change", () => {
+    state.office = officeSel.value;
+    if (state.politician) {
+      const fits = ROWS.some((r) => r.recipient === state.politician &&
+        (!state.town || r.town === state.town) &&
+        (!state.office || r.office === state.office));
+      if (!fits) { state.politician = ""; polInput.value = ""; }
+    }
+    refreshPoliticianList();
+    render();
+  });
+
+  // datalist selection fires "input"; also handle typed exact matches + clearing.
+  polInput.addEventListener("change", commitPolitician);
+  polInput.addEventListener("input", () => {
+    // Commit immediately when the typed value is an exact candidate (datalist pick),
+    // or when cleared.
+    if (allNames.has(polInput.value.trim()) || polInput.value.trim() === "") {
+      commitPolitician();
+    }
+  });
+
+  // Donor search narrows ONLY the donors table; debounce keystrokes lightly.
+  let donorTimer = null;
+  donorInput.addEventListener("input", () => {
+    clearTimeout(donorTimer);
+    donorTimer = setTimeout(() => {
+      state.donor = donorInput.value;
+      renderDonors(globalRows());
+    }, 120);
+  });
+
+  reset.addEventListener("click", () => {
+    state.town = state.office = state.politician = state.donor = "";
+    townSel.value = officeSel.value = "";
+    polInput.value = donorInput.value = "";
+    refreshPoliticianList();
+    render();
+  });
 }
 
 (async function main() {
   try {
-    const [summary, timeline, donors, candidates] = await Promise.all([
-      load("summary"), load("timeline"), load("donors"), load("candidates"),
-    ]);
-    renderHeadline(summary);
-    renderTimeline(timeline);
-    renderDonors(donors);
-    renderCandidates(candidates);
+    const data = await load("contributions");
+    const F = {};
+    data.fields.forEach((name, i) => (F[name] = i));
+    ROWS = data.rows.map((r) => ({
+      recipient: r[F.recipient],
+      town: r[F.town],
+      office: r[F.office],
+      donor: r[F.donor],
+      donorKey: r[F.donor_key],
+      city: r[F.city],
+      amount: typeof r[F.amount] === "number" ? r[F.amount] : Number(r[F.amount]) || 0,
+      year: r[F.year],
+      type: r[F.type],
+    }));
+
+    refreshPoliticianList();
+    wireControls();
+    render();
     document.body.classList.add("is-ready");
   } catch (e) {
     document.body.insertAdjacentHTML("afterbegin",
